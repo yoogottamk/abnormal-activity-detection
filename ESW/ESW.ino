@@ -3,7 +3,7 @@
 #include <SPI.h>
 
 long
-    pin = 12,
+pin = 12,
     samplingTime = 100,
     totalTime = 5000,
     n = totalTime / samplingTime,
@@ -13,13 +13,13 @@ String fileName = "/out.txt";
 File file;
 
 void setup() {
-  Serial.begin(9600);
-  
-  if(!SD.begin(5)){ // the five is the CS pin
+    Serial.begin(9600);
+
+    if(!SD.begin(5)){ // the five is the CS pin
         Serial.println("Card Mount Failed");
         return;
     }
-    
+
     uint8_t cardType = SD.cardType();
 
     if(cardType == CARD_NONE){
@@ -37,12 +37,12 @@ void setup() {
     } else {
         Serial.println("UNKNOWN");
     }
-    
+
     SD.remove(fileName);
     file = SD.open(fileName, FILE_WRITE);
     if (!file) {
-      Serial.println("File couldn't open");
-      return;
+        Serial.println("File couldn't open");
+        return;
     }
 }
 
@@ -51,28 +51,28 @@ short arr[sz];
 int c=0;
 
 void loop() {
-  n--;
-  if(n <= 0) {
-    if(n==0){
-      Serial.println("Finished!");
-      file.close();      
+    n--;
+    if(n <= 0) {
+        if(n==0){
+            Serial.println("Finished!");
+            file.close();      
+        }
+        return;
     }
-    return;
-  }
 
-  unsigned long start = millis();
+    unsigned long start = millis();
 
-  while(millis() - start <= samplingTime) {
-      short val = analogRead(pin);
-      arr[c++] = val;
-      if(c == sz) {
-        c = 0;
-        
-        for(int i = 0; i < sz; i++) file.println(arr[i]);
-      
-        Serial.println("Writing to file");  
-      }
-//      Serial.println(val);
-//      file.println(val); expensive $$
-  }
+    while(millis() - start <= samplingTime) {
+        short val = analogRead(pin);
+        arr[c++] = val;
+        if(c == sz) {
+            c = 0;
+
+            for(int i = 0; i < sz; i++) file.println(arr[i]);
+
+            Serial.println("Writing to file");  
+        }
+        //      Serial.println(val);
+        //      file.println(val); expensive $$
+    }
 }
