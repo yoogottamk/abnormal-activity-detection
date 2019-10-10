@@ -87,19 +87,26 @@ void sendString(String str) {
         Serial.print("SUCCESS: ");
         Serial.println(retCode);
         String x = http.getString();
-        Serial.println(x);
-        if(x.equals("0"))
+
+        if(x.equals("1")) {
+            Serial.println("FOUND ANOMALY!!!!");
             digitalWrite(buzzerPin, 1);
-        else
-            Serial.println("No");
+            delay(2000);
+            digitalWrite(buzzerPin, 0);
+        }
     } else {
         Serial.print("Some error occured: ");
         Serial.println(retCode);
     }
+
     http.end();
 }
 
+#define READINGS_PER_SECOND 1000
+#define DELAY_BW_READINGS 1000 / READINGS_PER_SECOND
+
 void loop() {
+   /*
     n--;
     if(n <= 0) {
         if(n == 0) {
@@ -116,23 +123,22 @@ void loop() {
         }
         return;
     }
+    */
 
-    unsigned long start = millis();
+    delay(DELAY_BW_READINGS);
 
-    while(millis() - start <= samplingTime) {
-        int val = analogRead(pin);
-        arr[c++] = val;
+    int val = analogRead(pin);
+    arr[c++] = val;
 
-        if(c == sz) {
-            c = 0;
+    if(c == sz) {
+        c = 0;
 
-            for(int i = 0; i < sz; i++) {
-                retStr += String(arr[i]);
-                retStr += "\n";
-            }
-
-            sendString(retStr);
-            retStr = "";
+        for(int i = 0; i < sz; i++) {
+            retStr += String(arr[i]);
+            retStr += "\n";
         }
+
+        sendString(retStr);
+        retStr = "";
     }
 }
