@@ -65,9 +65,9 @@ void sendResponse() {
     int percentage = anomalousCount * 100 / (long double)lim;
 
     if (percentage >= THRESHOLD_PERCENT)
-        printf("1\n");
+        printf("1");
     else {
-        printf("0\n");
+        printf("0");
     }
     fflush(stdout);
 }
@@ -76,6 +76,9 @@ int main() {
     long long val;
 
     while (scanf("%lld ", &val) != EOF) {
+        if(val == -1)
+            printf("\n");
+
         takeInput(val);
         sendResponse();
 

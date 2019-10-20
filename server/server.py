@@ -16,7 +16,10 @@ def default():
     response = read(process)
     write(process, "-1")
 
-    return "1" if response.find("1") != -1 else "0"
+
+    x = "1" if response.find("1") != -1 else "0"
+    print("Sending ", x)
+    return x
 
 if __name__ == "__main__":
     app.run("0.0.0.0", port=9999)
