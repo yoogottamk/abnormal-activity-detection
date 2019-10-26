@@ -79,7 +79,8 @@ void setup() {
 
 void sendString(String str) {
     Serial.println("Sending data: ");
-    http.begin("http://3188385a.ngrok.io/");
+    // please put forward slash in the ending
+    http.begin("http://26de7374.ngrok.io/");
 
     int retCode = http.POST(str);
 
@@ -87,14 +88,15 @@ void sendString(String str) {
         Serial.print("SUCCESS: ");
         Serial.println(retCode);
         String x = http.getString();
-
+//
         if(x.equals("1")) {
-            Serial.println("FOUND ANOMALY!!!!");
-            digitalWrite(buzzerPin, 1);
-            delay(2000);
-            digitalWrite(buzzerPin, 0);
+////          Serial.println("FOUND ANOMALY!!!!");
+//            digitalWrite(buzzerPin, 1);
+//            delay(2000);
+//            digitalWrite(buzzerPin, 0);
         }
     } else {
+        Serial.printf("[HTTPS] POST... failed, error: %s\n", http.errorToString(retCode).c_str());
         Serial.print("Some error occured: ");
         Serial.println(retCode);
     }
