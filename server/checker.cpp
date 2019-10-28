@@ -69,6 +69,7 @@ void sendResponse() {
     else {
         printf("0");
     }
+
     fflush(stdout);
 }
 

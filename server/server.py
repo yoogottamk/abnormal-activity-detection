@@ -1,5 +1,6 @@
 from flask import Flask, request
 from invoker import start, read, write
+import time
 
 app = Flask(__name__)
 
@@ -7,28 +8,29 @@ f = open("out", "a+")
 
 process = start("./checker")
 
-@app.route("/", methods=["POST"])
-def default():
-    response = request.data.decode("utf-8")
-    return "0"
+@app.route("/", methods=["POST", "GET"])
+def boomboom():
+    # response = request.data.decode("utf-8")
+    response = request.args.get("data")
 
-    f.write(request.data.decode("utf-8"))
-    f.flush()
+    # f.write(request.data.decode("utf-8"))
+    # f.flush()
 
     write(process, request.data.decode("utf-8"))
-    response = read(process)
     write(process, "-1")
+    response = read(process)
 
-    print(request.data.decode("utf-8"))
-    print(response)
+    print("GOT", response)
 
-    x = "1" if response.find("1") != -1 else "0"
-    print("Sending ", x)
-    return x
+    return "1" if response.find("1") != -1 else "0"
 
 @app.route("/test/", methods=["POST", "GET"])
 def test():
-    return "WHOO"
+    """
+    Only for testing
+    """
+
+    return "Test"
 
 if __name__ == "__main__":
-    app.run("0.0.0.0", port=9999)
+    app.run("0.0.0.0", port=9999, debug=True, use_reloader=True)
