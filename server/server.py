@@ -8,9 +8,9 @@ f = open("out", "a+")
 
 @app.route("/", methods=["POST", "GET"])
 def evaluate_data():
-    response = request.data.decode("utf-8")
+    response = request.data
 
-    f.write(request.data.decode("utf-8"))
+    f.write(response.decode("utf-8"))
     f.flush()
 
     process = start("./checker")
