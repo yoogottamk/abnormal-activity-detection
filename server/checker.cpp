@@ -28,9 +28,9 @@ long double averageWindow() {
 
 // needs to called at every time instant
 bool isAnomaly(long long value) {
-    long long avg = (long long)averageWindow(),
-              maxLimit = (long long)((1 + THRESHOLD_PERCENT / 100.0) * avg),
-              minLimit = (long long)((1 - THRESHOLD_PERCENT / 100.0) * avg);
+    long double avg = averageWindow(),
+              maxLimit = (1 + THRESHOLD_PERCENT / 100.0) * avg,
+              minLimit = (1 - THRESHOLD_PERCENT / 100.0) * avg;
 
     return (value >= maxLimit || value <= minLimit);
 }
@@ -57,13 +57,13 @@ long long counter = 0;
 
 void sendResponse() {
     int anomalousCount = 0,
-        lim = min((int)wasAnomalyMeasured.size(), SUB_WINDOW_SIZE);
+        lim = min((int)wasAnomalyMeasured.size(), WINDOW_SIZE);
 
     for (int i = 0; i < lim; i++) {
         anomalousCount += wasAnomalyMeasured[i];
     }
 
-    int percentage = anomalousCount * 100 / (long double)lim;
+    long double percentage = anomalousCount * 100 / (long double)lim;
 
     cout << (percentage >= THRESHOLD_PERCENT ? 1 : 0);
 }
