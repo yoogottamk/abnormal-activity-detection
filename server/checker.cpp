@@ -4,6 +4,7 @@
 #include <queue>
 #include <set>
 #include <vector>
+#include <fstream>
 #define min(x, y) ((x) >= (y) ? (y) : (x))
 using namespace std;
 using namespace __gnu_pbds;
@@ -12,7 +13,7 @@ typedef tree<long long, null_type, less_equal<long long>, rb_tree_tag,
              tree_order_statistics_node_update>
     map_t;
 
-deque<long long> runningValues(0);  // use deque here
+deque<long long> runningValues(0);
 map_t runningValuesSet;
 const int WINDOW_SIZE = 100;
 const int SUB_WINDOW_SIZE = WINDOW_SIZE * 0.2;
@@ -64,20 +65,40 @@ void sendResponse() {
 
     int percentage = anomalousCount * 100 / (long double)lim;
 
-    if (percentage >= THRESHOLD_PERCENT)
-        printf("1");
-    else {
-        printf("0");
-    }
+    cout << (percentage >= THRESHOLD_PERCENT ? 1 : 0);
 }
 
 int main() {
     long long val;
+    string fileName = "data";
 
-    while (scanf("%lld ", &val) != EOF) {
-        if(val == -1) {
-            printf("\n");
+    ifstream inp;
+    inp.open(fileName);
+
+    if (inp) {
+        while (inp >> val) {
+            if (val == -1)
+                break;
+
+            runningValues.push_back(val);
+        }
+        inp.close();
+    }
+
+    while (cin >> val) {
+        if (val == -1) {
+            cout << endl;
             fflush(stdout);
+
+            ofstream oft;
+            oft.open(fileName, ios::trunc);
+
+            for (auto d : runningValues) {
+                oft << d << " ";
+            }
+
+            oft << -1 << endl;
+            exit(0);
         }
 
         takeInput(val);

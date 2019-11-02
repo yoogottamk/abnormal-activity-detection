@@ -2,3 +2,4 @@ venv
 checker
 __pycache__
 server/out
+server/data
