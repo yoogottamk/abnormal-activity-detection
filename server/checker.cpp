@@ -18,6 +18,7 @@ map_t runningValuesSet;
 const int WINDOW_SIZE = 100;
 const int SUB_WINDOW_SIZE = WINDOW_SIZE * 0.2;
 const int THRESHOLD_PERCENT = 30;
+const int THRESHOLD_ABS = 100;
 long long runningSum = 0;
 bool calibrated = false;
 deque<bool> wasAnomalyMeasured;
@@ -28,9 +29,8 @@ long double averageWindow() {
 
 // needs to called at every time instant
 bool isAnomaly(long long value) {
-    long double avg = averageWindow(),
-              maxLimit = (1 + THRESHOLD_PERCENT / 100.0) * avg,
-              minLimit = (1 - THRESHOLD_PERCENT / 100.0) * avg;
+    long double avg = averageWindow(), maxLimit = THRESHOLD_ABS + avg,
+                minLimit = -THRESHOLD_ABS + avg;
 
     return (value >= maxLimit || value <= minLimit);
 }
