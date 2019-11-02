@@ -9,7 +9,7 @@ def start(executable_file):
     )
 
 def read(process):
-    return process.stdout.readline().decode("utf-8").strip()
+    return process.stdout.readline()#.decode("utf-8").strip()
 
 def write(process, message):
     process.stdin.write(f"{message.strip()}\n".encode("utf-8"))

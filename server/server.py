@@ -1,26 +1,23 @@
 from flask import Flask, request
-from invoker import start, read, write
+from invoker import start, read, write, terminate
 import time
 
 app = Flask(__name__)
 
 f = open("out", "a+")
 
-process = start("./checker")
-
 @app.route("/", methods=["POST", "GET"])
-def boomboom():
-    # response = request.data.decode("utf-8")
-    response = request.args.get("data")
+def evaluate_data():
+    response = request.data.decode("utf-8")
 
-    # f.write(request.data.decode("utf-8"))
-    # f.flush()
+    f.write(request.data.decode("utf-8"))
+    f.flush()
 
-    write(process, request.data.decode("utf-8"))
-    write(process, "-1")
-    response = read(process)
+    process = start("./checker")
+    response, err = process.communicate(response + "-1\n".encode())
+    terminate(process)
 
-    print("GOT", response)
+    response = response.decode("utf-8")
 
     return "1" if response.find("1") != -1 else "0"
 

@@ -69,16 +69,16 @@ void sendResponse() {
     else {
         printf("0");
     }
-
-    fflush(stdout);
 }
 
 int main() {
     long long val;
 
     while (scanf("%lld ", &val) != EOF) {
-        if(val == -1)
+        if(val == -1) {
             printf("\n");
+            fflush(stdout);
+        }
 
         takeInput(val);
         sendResponse();
