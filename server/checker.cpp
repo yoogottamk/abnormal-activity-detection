@@ -5,7 +5,11 @@
 #include <set>
 #include <vector>
 #include <fstream>
-#define min(x, y) ((x) >= (y) ? (y) : (x))
+int min(int x, int y) {
+    if (x <= y)
+        return x;
+    return y;
+}
 using namespace std;
 using namespace __gnu_pbds;
 
@@ -48,9 +52,10 @@ void takeInput(long long value) {
     runningValues.push_back(value);
     runningValuesSet.insert(value);
 
-    if (calibrated)
-        wasAnomalyMeasured.push_back(isAnomaly(value));
-    else
+    if (calibrated) {
+        bool x = isAnomaly(value);
+        wasAnomalyMeasured.push_back(x);
+    } else
         wasAnomalyMeasured.push_back(false);
 }
 long long counter = 0;
@@ -81,7 +86,14 @@ int main() {
                 break;
 
             runningValues.push_back(val);
+            wasAnomalyMeasured.push_back(0);
         }
+
+        while (runningValues.size() >= WINDOW_SIZE) {
+            wasAnomalyMeasured.pop_front();
+            runningValues.pop_front();
+        }
+
         inp.close();
     }
 
