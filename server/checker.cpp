@@ -86,10 +86,12 @@ int main() {
                 break;
 
             runningValues.push_back(val);
+	    runningSum += val;
             wasAnomalyMeasured.push_back(0);
         }
 
         while (runningValues.size() >= WINDOW_SIZE) {
+	    runningSum -= runningValues[0];
             wasAnomalyMeasured.pop_front();
             runningValues.pop_front();
         }
