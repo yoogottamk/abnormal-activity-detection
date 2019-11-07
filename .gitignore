@@ -3,3 +3,6 @@ checker
 __pycache__
 server/out
 server/data
+server/live
+server/graph.png
+data/
