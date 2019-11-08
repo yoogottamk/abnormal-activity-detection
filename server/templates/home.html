@@ -14,6 +14,13 @@
     <script src="{{url_for('static', filename='js/plot.js') }}"></script>
 
     <script>
+        const AUTO_RELOAD_TIME = 2000;
+        let AUTO_RELOAD_ENABLED = true;
+
+        if(`{{auto_reload}}`.trim() == "False"){
+            AUTO_RELOAD_ENABLED = false;
+        }
+
         window.addEventListener("load", function(){
             const inString = `{{input}}`.trim();
             const outString = `{{output}}`.trim();
@@ -22,6 +29,9 @@
             const outData = outString.split(" ").map(x => parseInt(x));
 
             window.plot(inData, outData);
+
+            if(AUTO_RELOAD_ENABLED)
+                window.setTimeout(() => window.location.reload(), AUTO_RELOAD_TIME);
         });
     </script>
 

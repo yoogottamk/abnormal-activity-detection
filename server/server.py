@@ -96,7 +96,10 @@ def evaluate_data():
 @app.route("/home/", methods=["GET"])
 def render_home():
     global data_so_far
-    return render_template("home.html", input=" ".join(data_so_far[0]), output=" ".join(data_so_far[1]))
+    auto_reload = True
+    if request.args.get("auto_reload") == "False":
+        auto_reload = False
+    return render_template("home.html", input=" ".join(data_so_far[0]), output=" ".join(data_so_far[1]), auto_reload=auto_reload)
 
 @app.route("/enable/", methods=["GET", "POST"])
 def enableBuzz():
@@ -111,8 +114,8 @@ def disableBuzz():
     return "1"
 
 @app.route("/status/", methods=["GET", "POST"])
-def disableBuzz():
-    return str(BUZZ_ENABLED)
+def buzzStatus():
+    return "1" if BUZZ_ENABLED else "0"
 
 if __name__ == "__main__":
     app.run("0.0.0.0", port=9999, debug=True, use_reloader=True)
