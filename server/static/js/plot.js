@@ -5,16 +5,14 @@ window.plot = function (inData, outData) {
         labels.push(i);
     }
 
-    console.log(inData);
-    console.log(outData);
     var myChart = new Chart(ctx, {
         type: 'line',
         data: {
             labels,
             datasets: [{
+                fill: false,
                 label: 'ESP data',
-                data: [inData],
-                borderWidth: 1
+                data: inData
             }]
         },
         options: {
