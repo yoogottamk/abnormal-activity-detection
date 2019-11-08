@@ -2,6 +2,7 @@ from flask import Flask, request, render_template
 import threading
 import time
 import os
+import requests, json
 
 from invoker import start, read, write, terminate
 from bot import send_text, send_graph
@@ -17,6 +18,35 @@ def write_to_file(fname, data):
 app = Flask(__name__, static_folder ="static")
 
 ESP_DOWN_FILENAME = "./ESP_DOWN"
+
+lastSentToOneM2M = time.time()
+RATE_LIMIT_OM2M = 5 * 60
+# send val to IIIT onem2m server
+def sendOneM2Mrequest(val):
+    if time.time() - lastSentToOneM2M < RATE_LIMIT_OM2M:
+        return
+
+    cse_ip = "139.59.42.21"
+    cse_port = "8080"
+    server = "http://"+cse_ip+":"+cse_port+"/~/in-cse/in-name/"
+    ae = "Team34_Abnormality_Detection_Sound_Classroom"
+    cnt = "node_1"
+
+    url = server + ae + "/" + cnt + "/"
+    payload = {
+        "m2m:cin": {
+            "cnf": "text/plain:0",
+            "con": val
+        }
+    }
+    headers = {
+        "X-M2M-Origin": "admin:admin",
+        "Content-Type": "application/json;ty=4",
+        "Content-Length": "100",
+        "Connection": "close"
+    }
+
+    r = requests.post(url, data=json.dumps(payload), headers=headers)
 
 # all input data we have received so far
 # and our corresponding output on it
@@ -56,7 +86,11 @@ def evaluate_data():
     if output.find("1") != -1:
         threading.Thread(target=send_graph, args=(data,output,"Found anomaly")).start()
 
-    return "1" if output.find("1") != -1 else "0"
+    shouldBuzzerBlow = "1" if output.find("1") != -1 else "0"
+
+    sendOneM2Mrequest(shouldBuzzerBlow)
+
+    return shouldBuzzerBlow
 
 @app.route("/home/", methods=["GET"])
 def render_home():
