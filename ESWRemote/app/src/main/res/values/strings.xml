@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">ESW Remote</string>
+    <string name="buzzer">Buzzer</string>
+    <string name="buzz">BUZZ!</string>
+</resources>
