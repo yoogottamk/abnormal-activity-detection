@@ -54,6 +54,7 @@ data_so_far = [["1","2","3"], ["0","1","0"]]
 seconds_to_keep_for = 10
 samples_per_sec = 3000
 data_count_to_retain = samples_per_sec * seconds_to_keep_for
+BUZZ_ENABLED = True
 
 # routes
 @app.route("/", methods=["POST", "GET"])
@@ -86,7 +87,7 @@ def evaluate_data():
     if output.find("1") != -1:
         threading.Thread(target=send_graph, args=(data,output,"Found anomaly")).start()
 
-    shouldBuzzerBlow = "1" if output.find("1") != -1 else "0"
+    shouldBuzzerBlow = "1" if BUZZ_ENABLED and output.find("1") != -1 else "0"
 
     sendOneM2Mrequest(shouldBuzzerBlow)
 
@@ -96,6 +97,22 @@ def evaluate_data():
 def render_home():
     global data_so_far
     return render_template("home.html", input=" ".join(data_so_far[0]), output=" ".join(data_so_far[1]))
+
+@app.route("/enable/", methods=["GET", "POST"])
+def enableBuzz():
+    global BUZZ_ENABLED
+    BUZZ_ENABLED = True
+    return "1"
+
+@app.route("/disable/", methods=["GET", "POST"])
+def disableBuzz():
+    global BUZZ_ENABLED
+    BUZZ_ENABLED = False
+    return "1"
+
+@app.route("/status/", methods=["GET", "POST"])
+def disableBuzz():
+    return str(BUZZ_ENABLED)
 
 if __name__ == "__main__":
     app.run("0.0.0.0", port=9999, debug=True, use_reloader=True)
