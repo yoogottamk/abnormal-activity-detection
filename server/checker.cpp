@@ -11,70 +11,60 @@ int min(int x, int y) {
     return y;
 }
 using namespace std;
-using namespace __gnu_pbds;
 
-typedef tree<long long, null_type, less_equal<long long>, rb_tree_tag,
-             tree_order_statistics_node_update>
-    map_t;
-
-deque<long long> runningValues(0);
-map_t runningValuesSet;
-const int WINDOW_SIZE = 100;
-const int SUB_WINDOW_SIZE = WINDOW_SIZE * 0.2;
-const int THRESHOLD_PERCENT = 30;
+deque<int> runningValues(0);
+const int SECONDS = 1;
+const int SAMPLES_PER_SEC = 3000;
+const int WINDOW_SIZE = SECONDS * SAMPLES_PER_SEC;
+const int THRESHOLD_PERCENT = 50;
 const int THRESHOLD_ABS = 100;
-long long runningSum = 0;
+int runningSum = 0;
 bool calibrated = false;
 deque<bool> wasAnomalyMeasured;
-
-long double averageWindow() {
-    return runningSum / (long double)WINDOW_SIZE;
-}
+int anomalousCount = 0;
+double averageWindow = 0;
 
 // needs to called at every time instant
-bool isAnomaly(long long value) {
-    long double avg = averageWindow(), maxLimit = THRESHOLD_ABS + avg,
-                minLimit = -THRESHOLD_ABS + avg;
+bool isAnomaly(int value) {
+    double maxLimit = THRESHOLD_ABS + averageWindow,
+           minLimit = -THRESHOLD_ABS + averageWindow;
 
     return (value >= maxLimit || value <= minLimit);
 }
 
-void takeInput(long long value) {
+void takeInput(int value) {
     while ((int)(runningValues.size()) >= WINDOW_SIZE) {
-        long long last = runningValues[0];
-        runningSum -= last;
+        runningSum -= runningValues.front();
+        anomalousCount -= wasAnomalyMeasured.front();
         wasAnomalyMeasured.pop_front();
         runningValues.pop_front();
-        runningValuesSet.erase(runningValuesSet.upper_bound(last));
     }
 
     runningSum += value;
     runningValues.push_back(value);
-    runningValuesSet.insert(value);
+    averageWindow = runningSum / (double)WINDOW_SIZE;
 
     if (calibrated) {
         bool x = isAnomaly(value);
         wasAnomalyMeasured.push_back(x);
     } else
         wasAnomalyMeasured.push_back(false);
+
+    anomalousCount += wasAnomalyMeasured.back();
 }
-long long counter = 0;
+
+int counter = 0;
 
 void sendResponse() {
-    int anomalousCount = 0,
-        lim = min((int)wasAnomalyMeasured.size(), WINDOW_SIZE);
+    int lim = min((int)wasAnomalyMeasured.size(), WINDOW_SIZE);
 
-    for (int i = 0; i < lim; i++) {
-        anomalousCount += wasAnomalyMeasured[i];
-    }
-
-    long double percentage = anomalousCount * 100 / (long double)lim;
+    double percentage = anomalousCount * 100 / (double)lim;
 
     cout << (percentage >= THRESHOLD_PERCENT ? 1 : 0);
 }
 
 int main() {
-    long long val;
+    int val;
     string fileName = "data";
 
     ifstream inp;
@@ -86,12 +76,12 @@ int main() {
                 break;
 
             runningValues.push_back(val);
-	    runningSum += val;
+            runningSum += val;
             wasAnomalyMeasured.push_back(0);
         }
 
         while (runningValues.size() >= WINDOW_SIZE) {
-	    runningSum -= runningValues[0];
+            runningSum -= runningValues[0];
             wasAnomalyMeasured.pop_front();
             runningValues.pop_front();
         }
