@@ -11,8 +11,8 @@
             const inString = `{{input}}`.trim();
             const outString = `{{output}}`.trim();
 
-            const inData = inString.split(" ");
-            const outData = outString.split(" ");
+            const inData = inString.split(" ").map(x => parseInt(x));
+            const outData = outString.split(" ").map(x => parseInt(x));
 
             window.plot(inData, outData);
         });
