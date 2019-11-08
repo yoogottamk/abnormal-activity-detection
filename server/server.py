@@ -3,6 +3,7 @@ import threading
 import time
 import os
 import requests, json
+import re
 
 from invoker import start, read, write, terminate
 from bot import send_text, send_graph
@@ -18,6 +19,7 @@ def write_to_file(fname, data):
 app = Flask(__name__, static_folder ="static")
 
 ESP_DOWN_FILENAME = "./ESP_DOWN"
+BUZZ_NEXT = False
 
 lastSentToOneM2M = time.time()
 RATE_LIMIT_OM2M = 5 * 60
@@ -55,11 +57,29 @@ seconds_to_keep_for = 10
 samples_per_sec = 3000
 data_count_to_retain = samples_per_sec * seconds_to_keep_for
 BUZZ_ENABLED = True
+reg = re.compile(r"(\d{3})")
+rep = r"\1 "
 
-# routes
+def extras(response,output):
+    global data_so_far
+
+    # decoded input
+    data = re.sub(reg, rep, response.decode("utf-8"))
+
+    # add latest data and trim to the count we wish to retain
+    data_so_far[0].append(data.split(" "))
+    data_so_far[1].append(list(output))
+    data_so_far = [data_so_far[0][0:data_count_to_retain], data_so_far[1][0:data_count_to_retain]]
+
+    append_to_file("out", data)
+    write_to_file("live", str(time.time()).split('.')[0])
+
+    if output.find("1") != -1:
+        send_graph(data,output,"Found anomaly")
+
 @app.route("/", methods=["POST", "GET"])
 def evaluate_data():
-    global data_so_far
+    global BUZZ_NEXT
 
     if os.path.exists(ESP_DOWN_FILENAME):
         os.remove("./ESP_DOWN")
@@ -67,25 +87,17 @@ def evaluate_data():
 
     response = request.data
 
+    if BUZZ_NEXT:
+        BUZZ_NEXT = False
+        return "1"
+
     process = start("./checker")
     output, err = process.communicate(response + "-1\n".encode())
     terminate(process)
-
-    # decoded input
-    data = response.decode("utf-8")
     # decoded output
     output = output.decode("utf-8")
-
-    # add latest data and trim to the count we wish to retain
-    data_so_far[0].append(data)
-    data_so_far[1].append(output)
-    data_so_far = [data_so_far[0][0:data_count_to_retain], data_so_far[1][0:data_count_to_retain]]
-
-    append_to_file("out", data)
-    write_to_file("live", str(time.time()).split('.')[0])
-
-    if output.find("1") != -1:
-        threading.Thread(target=send_graph, args=(data,output,"Found anomaly")).start()
+    
+    threading.Thread(target=extras, args=(response,output,)).start()
 
     shouldBuzzerBlow = "1" if BUZZ_ENABLED and output.find("1") != -1 else "0"
 
@@ -116,6 +128,12 @@ def disableBuzz():
 @app.route("/status/", methods=["GET", "POST"])
 def buzzStatus():
     return "1" if BUZZ_ENABLED else "0"
+
+@app.route("/BUZZ/", methods=["GET","POST"])
+def override_buzzer():
+    global BUZZ_NEXT
+    BUZZ_NEXT = True
+    return "Done!"
 
 if __name__ == "__main__":
     app.run("0.0.0.0", port=9999, debug=True, use_reloader=True)

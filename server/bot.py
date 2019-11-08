@@ -4,6 +4,7 @@ import requests
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+SEP = " "
 
 CHAT_IDs = ["630804492", "879466464", "623858814"]
 BOT_URL = 'https://api.telegram.org/bot853098987:AAF87AC_3qzruYsN9Cjpk6aKilK5Om9RJu4/'
@@ -17,7 +18,9 @@ def send_text(msg):
 def send_graph(val, detect, caption):
     url = BOT_URL + 'sendPhoto'
 
-    values = [ int(x) for x in val.strip().split("\n") ]
+    val = val[:val.find("-1")]
+    
+    values = [ 10*int(x) for x in val.strip().split(SEP) ]
     detected_at = np.array([ int(x) for x in list(detect.strip()) ])
     indices = np.where(detected_at == 1)
 
