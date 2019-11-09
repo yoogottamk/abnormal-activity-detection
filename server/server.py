@@ -52,9 +52,9 @@ def sendOneM2Mrequest(val):
 
 # all input data we have received so far
 # and our corresponding output on it
-data_so_far = [["1","2","3"], ["0","1","0"]]
-seconds_to_keep_for = 10
-samples_per_sec = 3000
+data_so_far = [["1"], ["0"]]
+seconds_to_keep_for = 5
+samples_per_sec = 600
 data_count_to_retain = samples_per_sec * seconds_to_keep_for
 BUZZ_ENABLED = True
 reg = re.compile(r"(\d{3})")
@@ -65,17 +65,19 @@ def extras(response,output):
 
     # decoded input
     data = re.sub(reg, rep, response.decode("utf-8"))
+    # print(data[0:50])
+    # print(output[0:50])
 
     # add latest data and trim to the count we wish to retain
-    data_so_far[0].append(data.split(" "))
-    data_so_far[1].append(list(output))
+    data_so_far[0] += data.split(" ")
+    data_so_far[1] += list(output)
     data_so_far = [data_so_far[0][0:data_count_to_retain], data_so_far[1][0:data_count_to_retain]]
 
     append_to_file("out", data)
     write_to_file("live", str(time.time()).split('.')[0])
 
     if output.find("1") != -1:
-        send_graph(data,output,"Found anomaly")
+        send_graph(data, output, "Found anomaly")
 
 @app.route("/", methods=["POST", "GET"])
 def evaluate_data():
@@ -93,6 +95,8 @@ def evaluate_data():
 
     process = start("./checker")
     output, err = process.communicate(response + "-1\n".encode())
+    if err:
+        print(err)
     terminate(process)
     # decoded output
     output = output.decode("utf-8")
@@ -101,7 +105,7 @@ def evaluate_data():
 
     shouldBuzzerBlow = "1" if BUZZ_ENABLED and output.find("1") != -1 else "0"
 
-    sendOneM2Mrequest(shouldBuzzerBlow)
+    # sendOneM2Mrequest(shouldBuzzerBlow)
 
     return shouldBuzzerBlow
 
@@ -111,6 +115,7 @@ def render_home():
     auto_reload = True
     if request.args.get("auto_reload") == "False":
         auto_reload = False
+    # print(data_so_far[0][:50])
     return render_template("home.html", input=" ".join(data_so_far[0]), output=" ".join(data_so_far[1]), auto_reload=auto_reload)
 
 @app.route("/enable/", methods=["GET", "POST"])

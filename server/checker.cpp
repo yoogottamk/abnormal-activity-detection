@@ -6,18 +6,20 @@
 #include <vector>
 #include <fstream>
 #include <string>
+
 int min(int x, int y) {
     if (x <= y)
         return x;
     return y;
 }
+
 using namespace std;
 
 deque<int> runningValues(0);
 const int SECONDS = 1;
 const int SAMPLES_PER_SEC = 400;
 const int WINDOW_SIZE = 100; // SECONDS * SAMPLES_PER_SEC;
-const int THRESHOLD_PERCENT = 50;
+const int THRESHOLD_PERCENT = 24;
 const int THRESHOLD_ABS = 100;
 int runningSum = 0;
 bool calibrated = false;
@@ -95,15 +97,14 @@ int main() {
         cin >> s;
 
         if(s.size() % 3 != 0) {
-            cout << -3;
+            cerr << -3;
             return 1;
         }
 
         for(int i = 0, len = s.size(); i < len; i+=3){
             int val = (s[i]-'0')*100 + (s[i+1]-'0')*10 + (s[i+2]-'0');
-            val *= 10;
-
-            takeInput(val);
+	    val *= 10;
+	    takeInput(val);
             sendResponse();
 
             counter++;
