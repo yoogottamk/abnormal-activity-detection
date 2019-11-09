@@ -1,10 +1,18 @@
-window.plot = function (inData, outData) {
+function round(x){
+	let scale = 1000;
+	return Math.round(x * scale) / scale;
+}
+
+window.plot = function (inData, outData, step) {
     const ctx = document.getElementById('myChart').getContext('2d');
     const labels = [];
-
-    for (let i = 1, len = inData.length; i <= len; i++) {
-        labels.push(i);
-    }
+	step = round(step);
+	let c = 0;
+	
+	for (let i = 1, len = inData.length; i <= len; i++) {
+        	labels.push(round(c));
+		c += step;
+	    }	
 
 	if(parseInt(inData[0]) < 50) 
 	{
