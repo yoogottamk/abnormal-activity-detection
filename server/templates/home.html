@@ -24,11 +24,14 @@
         window.addEventListener("load", function(){
             const inString = `{{input}}`.trim();
             const outString = `{{output}}`.trim();
+            const step = `{{step}}`.trim();
+            const timestamp = `{{timestamp}}`.trim();
+	
 
-            const inData = inString.split(" ").map(x => parseInt(x) * 10);
-            const outData = outString.split(" ").map(x => parseInt(x) * 10);
+            const inData = inString.split(" ").map(x => parseInt(x) * 10 + Math.floor(Math.random()*10));
+            const outData = outString.split(" ").map(x => parseInt(x));
 
-            window.plot(inData, outData);
+            window.plot(inData, outData, step);
 
             if(AUTO_RELOAD_ENABLED)
                 window.setTimeout(() => window.location.reload(), AUTO_RELOAD_TIME);
@@ -46,6 +49,9 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <a class="navbar-brand" href="#">Dashboard</a>
+	<a class="navbar-brand" href="#">
+		Last updated: {{timestamp}}
+	</a>
     </nav>
 
     <div class="container-fluid container">

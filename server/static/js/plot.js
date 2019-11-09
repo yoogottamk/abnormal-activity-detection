@@ -1,5 +1,5 @@
 function round(x){
-	let scale = 1000;
+	let scale = 100000;
 	return Math.round(x * scale) / scale;
 }
 
@@ -19,6 +19,7 @@ window.plot = function (inData, outData, step) {
 		inData.shift();
 		labels.pop();
 	}
+	console.log("Number of samples", inData.length);
 
 	
     new Chart(ctx, {

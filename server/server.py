@@ -1,4 +1,5 @@
 from flask import Flask, request, render_template
+from datetime import datetime
 import threading
 import time
 import os
@@ -22,16 +23,24 @@ ESP_DOWN_FILENAME = "./ESP_DOWN"
 BUZZ_NEXT = False
 
 lastSentToOneM2M = time.time()
-RATE_LIMIT_OM2M = 5 * 60
+RATE_LIMIT_OM2M = 60
+
+def currentTimestampFormatted():
+    now = datetime.now()
+    # dd/mm/YY H:M:S
+    dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+    return dt_string
+
 # send val to IIIT onem2m server
 def sendOneM2Mrequest(val):
-    if time.time() - lastSentToOneM2M < RATE_LIMIT_OM2M:
+    global lastSentToOneM2M
+    if int(time.time()) - lastSentToOneM2M < RATE_LIMIT_OM2M:
         return
 
-    cse_ip = "139.59.42.21"
-    cse_port = "8080"
+    cse_ip = "onem2m.iiit.ac.in"
+    cse_port = "443"
     server = "http://"+cse_ip+":"+cse_port+"/~/in-cse/in-name/"
-    ae = "Team34_Abnormality_Detection_Sound_Classroom"
+    ae = "Team34_Abnormal_activity_detection_outside_of_classroom"
     cnt = "node_1"
 
     url = server + ae + "/" + cnt + "/"
@@ -48,36 +57,44 @@ def sendOneM2Mrequest(val):
         "Connection": "close"
     }
 
+    lastSentToOneM2M = int(time.time())
+
     r = requests.post(url, data=json.dumps(payload), headers=headers)
+    print(lastSentToOneM2M)
+    print(r)
 
 # all input data we have received so far
 # and our corresponding output on it
 data_so_far = [["1"], ["0"]]
-seconds_to_keep_for = 5
+last_updated_data = ""
+seconds_to_keep_for = 10
 samples_per_sec = 600
 data_count_to_retain = samples_per_sec * seconds_to_keep_for
+graph_step = seconds_to_keep_for / data_count_to_retain
 BUZZ_ENABLED = True
 reg = re.compile(r"(\d{3})")
 rep = r"\1 "
 
-def extras(response,output):
+def extras(response,output,shouldBuzzerBlow):
     global data_so_far
+    global last_updated_data
 
     # decoded input
     data = re.sub(reg, rep, response.decode("utf-8"))
-    # print(data[0:50])
-    # print(output[0:50])
 
     # add latest data and trim to the count we wish to retain
     data_so_far[0] += data.split(" ")
     data_so_far[1] += list(output)
-    data_so_far = [data_so_far[0][0:data_count_to_retain], data_so_far[1][0:data_count_to_retain]]
+    data_so_far = [data_so_far[0][-data_count_to_retain:], data_so_far[1][-data_count_to_retain:]]
+    last_updated_data = currentTimestampFormatted()
 
     append_to_file("out", data)
     write_to_file("live", str(time.time()).split('.')[0])
 
     if output.find("1") != -1:
         send_graph(data, output, "Found anomaly")
+
+    sendOneM2Mrequest(shouldBuzzerBlow)
 
 @app.route("/", methods=["POST", "GET"])
 def evaluate_data():
@@ -100,12 +117,10 @@ def evaluate_data():
     terminate(process)
     # decoded output
     output = output.decode("utf-8")
-    
-    threading.Thread(target=extras, args=(response,output,)).start()
 
     shouldBuzzerBlow = "1" if BUZZ_ENABLED and output.find("1") != -1 else "0"
-
-    # sendOneM2Mrequest(shouldBuzzerBlow)
+    
+    threading.Thread(target=extras, args=(response,output,shouldBuzzerBlow)).start()
 
     return shouldBuzzerBlow
 
@@ -116,7 +131,7 @@ def render_home():
     if request.args.get("auto_reload") == "False":
         auto_reload = False
     # print(data_so_far[0][:50])
-    return render_template("home.html", input=" ".join(data_so_far[0]), output=" ".join(data_so_far[1]), auto_reload=auto_reload)
+    return render_template("home.html", input=" ".join(data_so_far[0]), output=" ".join(data_so_far[1]), auto_reload=auto_reload, step=graph_step, timestamp=last_updated_data)
 
 @app.route("/enable/", methods=["GET", "POST"])
 def enableBuzz():
