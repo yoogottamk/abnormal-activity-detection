@@ -30,7 +30,7 @@ window.plot = function (inData, outData, step) {
 		borderColor: "rgba(74,192,192,1)",
 //		backgroundColor: "rgba(255,0,0,0)",
                 fill: false,
-                label: 'ESP data',
+                label: 'ESP data for last ten seconds',
                 data: inData
             }]
         },
