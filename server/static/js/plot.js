@@ -3,6 +3,7 @@ function round(x){
 	return Math.round(x * scale) / scale;
 }
 
+const normal = "rgba(74,192,192,1)", red = "rgba(200,50,50,1)";
 window.plot = function (inData, outData, step) {
     const ctx = document.getElementById('myChart').getContext('2d');
     const labels = [];
@@ -19,15 +20,15 @@ window.plot = function (inData, outData, step) {
 		inData.shift();
 		labels.pop();
 	}
-	console.log("Number of samples", inData.length);
 
+	let shouldColorRed = outData.indexOf(1) != -1;
 	
     new Chart(ctx, {
         type: 'line',
         data: {
             labels,
             datasets: [{
-		borderColor: "rgba(74,192,192,1)",
+		    borderColor: shouldColorRed ? red : normal,
 //		backgroundColor: "rgba(255,0,0,0)",
                 fill: false,
                 label: 'ESP data for last ten seconds',

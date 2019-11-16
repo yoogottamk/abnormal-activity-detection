@@ -60,8 +60,8 @@ def sendOneM2Mrequest(val):
     lastSentToOneM2M = int(time.time())
 
     r = requests.post(url, data=json.dumps(payload), headers=headers)
-    print(lastSentToOneM2M)
-    print(r)
+    # print(lastSentToOneM2M)
+    # print(r)
 
 # all input data we have received so far
 # and our corresponding output on it
@@ -74,6 +74,9 @@ graph_step = seconds_to_keep_for / data_count_to_retain
 BUZZ_ENABLED = True
 reg = re.compile(r"(\d{3})")
 rep = r"\1 "
+freg = r" "
+frep = r"0\n"
+SEP = " "
 
 def extras(response,output,shouldBuzzerBlow):
     global data_so_far
@@ -82,13 +85,17 @@ def extras(response,output,shouldBuzzerBlow):
     # decoded input
     data = re.sub(reg, rep, response.decode("utf-8"))
 
+    # hotfix, ignore
+    fdata = data[:data.find("-1")]
+    fdata = re.sub(freg,frep,fdata.strip() + " ")
+
     # add latest data and trim to the count we wish to retain
     data_so_far[0] += data.split(" ")
     data_so_far[1] += list(output)
     data_so_far = [data_so_far[0][-data_count_to_retain:], data_so_far[1][-data_count_to_retain:]]
     last_updated_data = currentTimestampFormatted()
 
-    append_to_file("out", data)
+    append_to_file("out", fdata)
     write_to_file("live", str(time.time()).split('.')[0])
 
     if output.find("1") != -1:

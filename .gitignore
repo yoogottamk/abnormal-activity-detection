@@ -34,6 +34,8 @@ server/data
 **/android/gradlew.bat
 **/android/local.properties
 **/android/**/GeneratedPluginRegistrant.java
+
 server/live
+server/ESP_DOWN
 server/graph.png
 data/
