@@ -19,7 +19,8 @@ def write_to_file(fname, data):
 
 app = Flask(__name__, static_folder ="static")
 
-ESP_DOWN_FILENAME = "./ESP_DOWN"
+ESP_DOWN_FILENAME = "../ESP_DOWN"
+SERVER_DOWN_FILENAME = "../SERVER_DOWN"
 BUZZ_NEXT = False
 
 lastSentToOneM2M = time.time()
@@ -108,8 +109,12 @@ def evaluate_data():
     global BUZZ_NEXT
 
     if os.path.exists(ESP_DOWN_FILENAME):
-        os.remove("./ESP_DOWN")
+        os.remove(ESP_DOWN_FILENAME)
         send_text("ESP back up!")
+
+    if os.path.exists(SERVER_DOWN_FILENAME):
+        os.remove(SERVER_DOWN_FILENAME)
+        send_text("Flask server is up!")
 
     response = request.data
 
@@ -161,6 +166,10 @@ def override_buzzer():
     global BUZZ_NEXT
     BUZZ_NEXT = True
     return "Done!"
+
+@app.route("/test/", methods=["GET","POST"])
+def testAliveURL():
+    return "1"
 
 if __name__ == "__main__":
     app.run("0.0.0.0", port=9999, debug=True, use_reloader=True)

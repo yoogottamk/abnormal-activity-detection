@@ -36,6 +36,8 @@ server/data
 **/android/**/GeneratedPluginRegistrant.java
 
 server/live
-server/ESP_DOWN
 server/graph.png
 data/
+
+ESP_DOWN
+SERVER_DOWN
