@@ -1,17 +1,12 @@
-#include <FS.h>
-#include <SD.h>
-#include <SPI.h>
 #include <WiFi.h>
 #include <HTTPClient.h>
 
-#define sz 3000
+#define READINGS_PER_SECOND 400
+#define DELAY_BW_READINGS 1000000 / READINGS_PER_SECOND
+#define sz 3 * READINGS_PER_SECOND
+
 short arr[sz];
 int c=0;
-
-/*
-String fileName = "/out.txt";
-File file;
-*/
 
 int pin = 32,
      samplingTime = 100,
@@ -27,37 +22,6 @@ HTTPClient http;
 void setup() {
     Serial.begin(9600);
     pinMode(buzzerPin, OUTPUT);
-    /*
-    if(!SD.begin(5)){ // the five is the CS pin
-        Serial.println("Card Mount Failed");
-        return;
-    }
-
-    uint8_t cardType = SD.cardType();
-
-    if(cardType == CARD_NONE){
-        Serial.println("No SD card attached");
-        return;
-    }
-
-    Serial.print("SD Card Type: ");
-    if(cardType == CARD_MMC){
-        Serial.println("MMC");
-    } else if(cardType == CARD_SD){
-        Serial.println("SDSC");
-    } else if(cardType == CARD_SDHC){
-        Serial.println("SDHC");
-    } else {
-        Serial.println("UNKNOWN");
-    }
-
-    SD.remove(fileName);
-    file = SD.open(fileName, FILE_WRITE);
-    if (!file) {
-        Serial.println("File couldn't open");
-        return;
-    }
-    */
 
     /**
      * Setting up WiFi connection
@@ -65,7 +29,7 @@ void setup() {
      * TODO: Use WiFiMulti maybe
      */
     Serial.print("Connecting to WiFi");
-    WiFi.begin("yoogottam", "plis_/\\_plis");
+    WiFi.begin("esw-m19@iiith", "e5W-eMai@3!20hOct");
 
     while(WiFi.status() != WL_CONNECTED) {
         delay(500);
@@ -79,16 +43,11 @@ void setup() {
 
 String serverResponse;
 // please put forward slash in the ending
-String serverURL = "http://223cc4f0.ngrok.io/";
+String serverURL = "http://10.2.8.12:9999/";
 char* successMsg = "SUCCESS: ";
 void sendString(String str) {
     Serial.println("Sending data: ");
     
-    // somehow, the subprcoess call is taking a lot of time
-//    http.setConnectTimeout(20000);
-    //    http.setTimeout(20000);
-
-//    str = "data=" + urlencode(str);
     http.begin(serverURL);
     int retCode = http.POST(str);
 
@@ -112,30 +71,14 @@ void sendString(String str) {
     http.end();
 }
 
-#define READINGS_PER_SECOND 1000
-#define DELAY_BW_READINGS 1000 / READINGS_PER_SECOND
+String normalize(int x){
+    if(x<10) return "00"+String(x);
+    else if(x<100) return "0" + String(x);
+    else return String(x);
+}
 
 void loop() {
-   /*
-    n--;
-    if(n <= 0) {
-        if(n == 0) {
-            for(int i = 0; i < c; i++) {
-                // file.println(arr[i]);
-                retStr += String(arr[i]);
-                retStr += ",";
-            }
-
-            sendString(retStr);
-            retStr = "";
-            Serial.println("Finished!");
-//            file.close();
-        }
-        return;
-    }
-    */
-
-    delay(DELAY_BW_READINGS);
+    delayMicroseconds(DELAY_BW_READINGS);
 
     int val = analogRead(pin);
     arr[c++] = val;
@@ -144,10 +87,10 @@ void loop() {
         c = 0;
 
         for(int i = 0; i < sz; i++) {
-            retStr += String(arr[i]);
-            retStr += "\n";
+            retStr += normalize(arr[i] / 10);
         }
 
+        retStr += " -1 ";
         sendString(retStr);
         retStr = "";
     }
