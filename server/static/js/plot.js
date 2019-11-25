@@ -1,11 +1,7 @@
-function round(x) {
-	let scale = 100000;
-	return Math.round(x * scale) / scale;
-}
 const normal = "rgba(74,192,192,1)", red = "rgba(200,50,50,1)";
+const canvas = document.getElementById("myChart");
+const ctx = canvas.getContext('2d');
 window.plot = function (inData, outData, step) {
-	const canvas = document.getElementById("myChart");
-	const ctx = canvas.getContext('2d');
 	let labels = [];
 	step = round(step);
 	let c = 0;
@@ -13,12 +9,11 @@ window.plot = function (inData, outData, step) {
 	inData = inData.filter(x => parseInt(x) >= 00);
 
 	for (let i = 1, len = inData.length; i <= len; i++) {
-		/*		labels.push(round(c));*/
 		labels.push(i);
 		c += step;
 	}
-	const stepper = Math.round(inData.length / duration / 2);
 
+	const stepper = Math.round(inData.length / duration / 2);
 
 	let shouldColorRed = outData.indexOf(1) != -1;
 
@@ -46,13 +41,10 @@ window.plot = function (inData, outData, step) {
 			scaleLineColor: "rgba(0,0,0,.2)",
 			scaleGridLineColor: "rgba(0,0,0,.05)",
 			scaleFontColor: "#c5c7cc",
-			/*
-			segmentShowStroke: false,
-			*/
 			animation: {
 				duration: 0,
 			},
-			/*
+			
 			title: {
 				display: true,
 				text: 'ESP data'
@@ -65,7 +57,7 @@ window.plot = function (inData, outData, step) {
 				mode: 'nearest',
 				intersect: true
 			},
-			*/
+			
 			scales: {
 				xAxes: [{
 					display: true,
@@ -98,7 +90,7 @@ window.plot = function (inData, outData, step) {
 
 };
 
-const REFRESH_INTERVAL = 10;
+const REFRESH_INTERVAL = 1000;
 
 function query(step) {
 	var oReq = new XMLHttpRequest();
@@ -113,7 +105,6 @@ function query(step) {
 window.processData = function (inString, outString, step, AUTO_RELOAD_ENABLED) {
 	const inData = inString.split(" ").map(x => parseInt(x) * 10 + Math.floor(Math.random() * 10));
 	const outData = outString.split(" ").map(x => parseInt(x));
-	console.log("plotting", inData, outData);
 
 	window.plot(inData, outData, step);
 
