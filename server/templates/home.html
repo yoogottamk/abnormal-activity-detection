@@ -14,13 +14,13 @@
         <!-- <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"> -->
         <script src="https://kit.fontawesome.com/a9e704d549.js" crossorigin="anonymous"></script>
         <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.min.js" integrity="sha256-R4pqcOYV8lt7snxMQO/HSbVCFRPMdrhAFMH+vr9giYI=" crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/2.1.2/sweetalert.min.js"></script>
     </head>
     <body>
         <nav class="navbar navbar-custom navbar-fixed-top" role="navigation">
             <div class="container-fluid">
                 <div class="navbar-header">
-                    <a class="navbar-brand" href="#">Team 34 - ESP data dashboard</a>
-                    <!-- TODO fix positioning -->
+                    <a class="navbar-brand" href="#">Ambient Sound Analysis - Team 34</a>
                     <a class="navbar-brand" style="text-transform: unset;">
                         Last updated: {{timestamp}}
                     </a>
@@ -71,8 +71,7 @@
                 <div class="col-md-12">
                     <div class="panel panel-default">
                         <div class="panel-heading">
-                            Live data from server
-                            <span class="pull-right clickable panel-toggle panel-button-tab-left"><em class="fa fa-toggle-up"></em></span>
+                            Live ambient sound data 
                         </div>
                         <div class="panel-body">
                             <div class="canvas-wrapper" style="width: 100%; height: 100%;">
@@ -88,7 +87,6 @@
                     <div class="panel panel-default">
                         <div class="panel-heading">
                             Number of anomalies per quarter today
-                            <span class="pull-right clickable panel-toggle panel-button-tab-left"><em class="fa fa-toggle-up"></em></span>
                         </div>
                         <div class="panel-body">
                             <div class="canvas-wrapper" style="width: 100%; height: 100%;">
@@ -103,7 +101,6 @@
                     <div class="panel panel-default">
                         <div class="panel-heading">
                             Number of anomalies per day of this week
-                            <span class="pull-right clickable panel-toggle panel-button-tab-left"><em class="fa fa-toggle-up"></em></span>
                         </div>
                         <div class="panel-body">
                             <div class="canvas-wrapper" style="width: 100%; height: 100%;">
@@ -113,6 +110,22 @@
                     </div>
                 </div>
             </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                         Enter the time machine! Download data for a specific date
+                            <span class="pull-right clickable panel-toggle panel-button-tab-left"><em class="fa fa-toggle-up"></em></span>
+                        </div>
+                        <div class="panel-body panel-date">
+			    <input type="date">
+			    <button>Download</button>
+                        </div>
+                    </div>
+                </div>
+	    </div>
+	    <div class="row">
+	    </div>
 
 
             <script src="{{url_for('static', filename='js/jquery-1.11.1.min.js') }}"></script>
@@ -124,14 +137,16 @@
             <script src="{{url_for('static', filename='js/plot.js') }}"></script>
 
             <script>
-                function query2(endpoint, callback){
+                function query2(endpoint, callback, params){
                     var oReq = new XMLHttpRequest();
                     oReq.addEventListener("load", (resp) => {
                         resp = JSON.parse(resp.target.response);
                         callback(resp);
                     });
+
                     oReq.open("GET", "/" + endpoint + "/");
-                    oReq.send();
+			if(params)oReq.send(JSON.stringify(params));
+else                    oReq.send();
                 }
 
 const endPoints = ["anomaly-today", "anomaly-week", "weekly-anomaly-change"];
@@ -147,8 +162,9 @@ query2("top-order-json", res => {
             document.getElementsByClassName("fa-arrow-circle-" + choose)[0].style.display = "inline-block";
             let elmEnd = 
                 document.getElementsByClassName(endpoint)[0];
-            elmEnd.innerHTML = value;
-            elmEnd.nextElementSibling.innerHTML = (isneg ? "Lesser" : "Higher") + " anomalies this week";
+		value = Math.round(value);
+            elmEnd.innerHTML = value + "%";
+            elmEnd.nextElementSibling.innerHTML = (isneg ? "less" : "high") + " anomalies this week";
 
         }
         else
@@ -178,13 +194,14 @@ query2("bar-graph-weekly", res => {
     for(let i = 0; i < 7; i++){
         labels.unshift(date - i);
     }
+	res=res.reverse();
 
     new Chart(ctx, {
         "type": "bar",
         "data": {
             labels,
             datasets: [{
-                label: "Number of anomalies in each week of the day",
+                label: "Number of anomalies in each day of the week",
                 data: res,
                 backgroundColor: color(window.chartColors.blue).alpha(0.5).rgbString(),
                 borderColor: window.chartColors.blue,
@@ -282,6 +299,31 @@ window.addEventListener("load", function(){
     const step = `{{step}}`.trim();
     const duration = `{{duration}}`.trim();
     window.duration = duration;
+
+
+	const panel = document.getElementsByClassName("panel-date")[0];
+	const inp = panel.firstElementChild;
+	const btn = panel.children[1];
+
+	btn.onclick = function(){
+		let val = inp.value;
+		let v2 = val.split("-");
+		console.log(v2);
+		let year = parseInt(v2[0]);
+		let month = parseInt(v2[1]);
+		let day = parseInt(v2[2]);
+
+		if(year<2019||month<11||day<7){
+			swal("Aw, snap!", "We didn't deploy before this date", "error");
+		} else if(((new Date(val).getTime()/1000)|0) > Date.now()/1000){
+			swal("Woah!", "Don't rush to the future yet buddy, we ain't there yet!", "error");
+		}else{			
+			swal("Great!", "Your data is on the way", "success");
+			query2("get-day-log", res => {}, {date: val});
+		}
+		
+
+	};
     processData(inString, outString, step, AUTO_RELOAD_ENABLED);
 });
             </script>

@@ -43,10 +43,6 @@ window.plot = function (inData, outData) {
 				duration: 0,
 			},
 			
-			title: {
-				display: true,
-				text: 'ESP data'
-			},
 			tooltips: {
 				mode: 'index',
 				intersect: false,

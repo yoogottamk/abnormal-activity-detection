@@ -14,6 +14,7 @@ import requests
 import json
 import re
 import random
+from shutil import copyfile
 
 from invoker import start, read, write, terminate
 from bot import send_text, send_graph
@@ -161,6 +162,9 @@ def evaluate_data():
 def get_data():
     global data_so_far
 
+    today = dt.date.today()
+
+    copyfile("output", f"../data/outputs/{today.year}-{today.month}-{today.day}.log")
     return jsonify({"input": " ".join(data_so_far[0]), "output": " ".join(data_so_far[1])})
 
 
@@ -206,7 +210,7 @@ def top_order_json():
     values = {}
 
     today = dt.date.today()
-    prevWeekStart = today - dt.timedelta(days=7)
+    prevWeekStart = today - dt.timedelta(days=6)
     prevPrevWeekStart = prevWeekStart - dt.timedelta(days=7)
 
     todaysCount = getDailyCount(today.year, today.month, today.day)
@@ -215,7 +219,7 @@ def top_order_json():
 
     values["anomaly-today"] = todaysCount
     values["anomaly-week"] = thisWeeksCount
-    values["weekly-anomaly-change"] = thisWeeksCount - prevWeeksCount
+    values["weekly-anomaly-change"] = ((thisWeeksCount - prevWeeksCount) / prevWeeksCount) * 100
 
     return jsonify(values)
 
@@ -236,6 +240,12 @@ def bar_graph_weekly():
         data.append(getDailyCount(d.year, d.month, d.day))
 
     return jsonify(data)
+
+@app.route("/get-day-log/", methods=["GET", "POST"])
+def get_day_log():
+    year, month, day = request.args.get("date").split("-")
+
+    return "1"
 
 @app.route("/test/", methods=["GET", "POST"])
 def testAliveURL():
