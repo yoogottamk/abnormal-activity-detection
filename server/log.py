@@ -53,7 +53,7 @@ def getPastSevenDaysLogs():
     count = 0
 
     for d in range(7):
-        prevDate = today - dt.timedelta(d)
+        prevDate = today - dt.timedelta(days=d)
         daily.append(getDayLog(prevDate.year, prevDate.month, prevDate.day))
 
     return daily

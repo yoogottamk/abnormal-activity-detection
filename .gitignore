@@ -36,6 +36,7 @@ server/data
 **/android/**/GeneratedPluginRegistrant.java
 
 server/live
+server/output
 server/graph.png
 data/
 

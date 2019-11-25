@@ -6,7 +6,7 @@ Please don't judge
 """
 
 from flask import Flask, request, render_template, jsonify
-from datetime import datetime
+import datetime as dt
 import threading
 import time
 import os
@@ -17,11 +17,13 @@ import random
 
 from invoker import start, read, write, terminate
 from bot import send_text, send_graph
+from analytics import getDailyCount, getWeeklyCount, getQuarterCount
 
 
 ESP_DOWN_FILENAME = "../ESP_DOWN"
 SERVER_DOWN_FILENAME = "../SERVER_DOWN"
 BUZZ_NEXT = False
+OUTPUT_LOG_FILE = "output"
 
 lastSentToOneM2M = time.time()
 RATE_LIMIT_OM2M = 60
@@ -51,7 +53,7 @@ def write_to_file(fname, data):
 
 
 def currentTimestampFormatted():
-    now = datetime.now()
+    now = dt.datetime.now()
     # dd/mm/YY H:M:S
     dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
     return dt_string
@@ -90,7 +92,7 @@ def sendOneM2Mrequest(val):
     # print(r)
 
 
-def extras(response, output, shouldBuzzerBlow):
+def extras(response, output, shouldBuzzerBlow, isAnomaly):
     global data_so_far
     global last_updated_data
 
@@ -116,6 +118,7 @@ def extras(response, output, shouldBuzzerBlow):
 
     sendOneM2Mrequest(shouldBuzzerBlow)
 
+    append_to_file(OUTPUT_LOG_FILE, isAnomaly)
 
 app = Flask(__name__, static_folder="static")
 
@@ -146,9 +149,10 @@ def evaluate_data():
     output = output.decode("utf-8")
 
     shouldBuzzerBlow = "1" if BUZZ_ENABLED and output.find("1") != -1 else "0"
+    isAnomaly = "1" if output.find("1") != -1 else "0"
 
     threading.Thread(target=extras, args=(
-        response, output, shouldBuzzerBlow)).start()
+        response, output, shouldBuzzerBlow, isAnomaly)).start()
 
     return shouldBuzzerBlow
 
@@ -157,7 +161,6 @@ def evaluate_data():
 def get_data():
     global data_so_far
 
-    # how to return a dict here?
     return jsonify({"input": " ".join(data_so_far[0]), "output": " ".join(data_so_far[1])})
 
 
@@ -200,20 +203,43 @@ def override_buzzer():
 # this thing returns number of anomalies this week, this day, and change in anomalies as percent from previous week
 @app.route("/top-order-json/", methods=["GET", "POST"])
 def top_order_json():
-    endPoints = ["anomaly-today", "anomaly-week", "weekly-anomaly-change"]
-    d = {}
+    values = {}
 
-    for e in endPoints:
-        d[e] = -1
-        if e == "weekly-anomaly-change":
-            d[e] = ["1%", "up"]
+    today = dt.date.today()
+    prevWeekStart = today - dt.timedelta(days=7)
+    prevPrevWeekStart = prevWeekStart - dt.timedelta(days=7)
 
-    return jsonify(d)
+    todaysCount = getDailyCount(today.year, today.month, today.day)
+    thisWeeksCount = getWeeklyCount(prevWeekStart.year, prevWeekStart.month, prevWeekStart.day)
+    prevWeeksCount = getWeeklyCount(prevPrevWeekStart.year, prevPrevWeekStart.month, prevPrevWeekStart.day)
+
+    values["anomaly-today"] = todaysCount
+    values["anomaly-week"] = thisWeeksCount
+    values["weekly-anomaly-change"] = thisWeeksCount - prevWeeksCount
+
+    return jsonify(values)
+
+@app.route("/bar-graph-day/", methods=["GET", "POST"])
+def bar_graph_day():
+    today = dt.date.today()
+    data = getQuarterCount(today.year, today.month, today.day)
+
+    return jsonify(data)
+
+@app.route("/bar-graph-weekly/", methods=["GET", "POST"])
+def bar_graph_weekly():
+    data = []
+
+    today = dt.date.today()
+    for i in range(7):
+        d = today - dt.timedelta(days=i)
+        data.append(getDailyCount(d.year, d.month, d.day))
+
+    return jsonify(data)
 
 @app.route("/test/", methods=["GET", "POST"])
 def testAliveURL():
     return "1"
-
 
 if __name__ == "__main__":
     app.run("0.0.0.0", port=9999, debug=True, use_reloader=True)
