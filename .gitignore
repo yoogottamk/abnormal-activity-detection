@@ -38,6 +38,7 @@ server/data
 server/live
 server/output
 server/graph.png
+server/*.log
 data/
 
 ESP_DOWN

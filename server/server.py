@@ -5,7 +5,7 @@ day, after 2AM late night (early morning?)
 Please don't judge
 """
 
-from flask import Flask, request, render_template, jsonify
+from flask import Flask, request, render_template, jsonify, send_file
 import datetime as dt
 import threading
 import time
@@ -19,6 +19,7 @@ from shutil import copyfile
 from invoker import start, read, write, terminate
 from bot import send_text, send_graph
 from analytics import getDailyCount, getWeeklyCount, getQuarterCount
+from log import getCheckerOutputFromLog
 
 
 ESP_DOWN_FILENAME = "../ESP_DOWN"
@@ -34,7 +35,7 @@ RATE_LIMIT_OM2M = 60
 data_so_far = [["1"], ["0"]]
 last_updated_data = ""
 seconds_to_keep_for = 10
-samples_per_sec = 600
+samples_per_sec = 400
 data_count_to_retain = samples_per_sec * seconds_to_keep_for
 graph_step = seconds_to_keep_for / data_count_to_retain
 BUZZ_ENABLED = True
@@ -241,11 +242,22 @@ def bar_graph_weekly():
 
     return jsonify(data)
 
-@app.route("/get-day-log/", methods=["GET", "POST"])
-def get_day_log():
-    year, month, day = request.args.get("date").split("-")
+@app.route("/get-day-log/<val>", methods=["GET", "POST"])
+def get_day_log(val):
+    year, month, day, hour = val.split("-")
+    name = f"{year}-{month}-{day}_{int(hour):02d}.log"
+    fileName = "../data/" + name
 
-    return "1"
+    with open(fileName, "r") as micDataFile:
+        micData = micDataFile.read()
+
+    checkerOutput = getCheckerOutputFromLog(fileName)
+
+    with open(name, "w") as send:
+        send.write(micData)
+        send.write(checkerOutput)
+
+    return send_file(f'/home/esw_yoogottam/esw-project/server/{name}', as_attachment=True)
 
 @app.route("/test/", methods=["GET", "POST"])
 def testAliveURL():

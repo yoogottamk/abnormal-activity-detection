@@ -24,8 +24,8 @@ window.plot = function (inData, outData) {
 				label: "Sound intensity for last ten seconds",
 				borderColor: shouldColorRed ? red : normal,
 				pointColor: shouldColorRed ? red : normal,
-				backgroundColor : "rgba(48, 164, 255, 0.2)",
-				pointBackgroundColor : "rgba(48, 164, 255, 1)",
+				backgroundColor : shouldColorRed ? "rgba(200,50,50,0.2)":"rgba(47, 164, 255, 0.2)" ,
+				pointBackgroundColor : shouldColorRed? "rgba(200,50,50,1)": "rgba(48, 164, 255, 1)",
 				pointRadius: 0.1,
 				pointBorderColor: normal,
 
@@ -101,7 +101,7 @@ window.processData = function (inString, outString, AUTO_RELOAD_ENABLED) {
 	const inData = inString.split(" ").map(x => parseInt(x) * 10 + Math.floor(Math.random() * 10));
 	const outData = outString.split(" ").map(x => parseInt(x));
 
-	if(graphplotcount++ > 50) window.location.reload();
+	if(graphplotcount++ > 100) window.location.reload();
 
 	window.plot(inData, outData);
 

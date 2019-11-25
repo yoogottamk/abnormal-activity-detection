@@ -28,7 +28,7 @@
             </div><!-- /.container-fluid -->
         </nav>
 
-        <div class="col-sm-8 col-sm-offset-2 col-lg-10 col-lg-offset-1 main">
+        <div class="col-sm-10 col-sm-offset-1 col-lg-10 col-lg-offset-1 main">
             <div class="row">
                 <div class="col-lg-12">
                     <h1 class="page-header">Dashboard</h1>
@@ -114,11 +114,12 @@
                 <div class="col-md-12">
                     <div class="panel panel-default">
                         <div class="panel-heading">
-                         Enter the time machine! Download data for a specific date
+                         Enter the time machine! Download data for a specific date and hour
                             <span class="pull-right clickable panel-toggle panel-button-tab-left"><em class="fa fa-toggle-up"></em></span>
                         </div>
                         <div class="panel-body panel-date">
 			    <input type="date">
+			    <input type="number" min="0" max="23">
 			    <button>Download</button>
                         </div>
                     </div>
@@ -144,13 +145,17 @@
                         callback(resp);
                     });
 
+			if(params)
+                    oReq.open("GET", "/" + endpoint + "/" + params);
+			else 
                     oReq.open("GET", "/" + endpoint + "/");
-			if(params)oReq.send(JSON.stringify(params));
-else                    oReq.send();
+                    oReq.send();
                 }
 
 const endPoints = ["anomaly-today", "anomaly-week", "weekly-anomaly-change"];
+const AUTO_RELOAD_TIME = 2000;
 
+setInterval(()=>{
 query2("top-order-json", res => {
     endPoints.forEach(endpoint => {
         let value = res[endpoint];
@@ -209,6 +214,9 @@ query2("bar-graph-weekly", res => {
         },
         "options": {
             responsive: true,
+		animation:{
+			duration:0
+		},
             scales: {
                 xAxes: [{
                     gridLines: {
@@ -251,13 +259,16 @@ query2("bar-graph-day", res => {
             labels: ["0000-0600", "0600-1200", "1200-1800", "1800-2400"],
             datasets: [{
                 label: "Number of anomalies in each quarter of the day",
-                data: res,
+                data: res.reverse(),
                 backgroundColor: color(window.chartColors.blue).alpha(0.5).rgbString(),
                 borderColor: window.chartColors.blue,
             }]
         },
         "options": {
             responsive: true,
+		animation:{
+			duration:0
+		},
             scales: {
                 xAxes: [{
                     gridLines: {
@@ -285,9 +296,9 @@ query2("bar-graph-day", res => {
             }
         }
     });
-});
+})
+},AUTO_RELOAD_TIME);
 
-const AUTO_RELOAD_TIME = 2000;
 let AUTO_RELOAD_ENABLED = true;
 if(`{{auto_reload}}`.trim() == "False"){
     AUTO_RELOAD_ENABLED = false;
@@ -303,23 +314,31 @@ window.addEventListener("load", function(){
 
 	const panel = document.getElementsByClassName("panel-date")[0];
 	const inp = panel.firstElementChild;
-	const btn = panel.children[1];
+	const inp2 = panel.children[1];
+	const btn = panel.children[2];
 
 	btn.onclick = function(){
-		let val = inp.value;
-		let v2 = val.split("-");
-		console.log(v2);
+		let hour = parseInt(inp2.value);
+		let val = inp.value + "-" + hour;
+		let v2 = inp.value.split("-");
 		let year = parseInt(v2[0]);
 		let month = parseInt(v2[1]);
 		let day = parseInt(v2[2]);
 
 		if(year<2019||month<11||day<7){
 			swal("Aw, snap!", "We didn't deploy before this date", "error");
-		} else if(((new Date(val).getTime()/1000)|0) > Date.now()/1000){
+		} else if(((new Date(inp.value+":"+hour+":00:00").getTime()/1000)|0) > Date.now()/1000){
 			swal("Woah!", "Don't rush to the future yet buddy, we ain't there yet!", "error");
 		}else{			
-			swal("Great!", "Your data is on the way", "success");
-			query2("get-day-log", res => {}, {date: val});
+			swal({
+  title: "Great!",
+  text: "Your data is on the way!",
+  icon: "success",
+  button: true,
+})
+.then((willDelete) => {
+ window.location.href = "/get-day-log/" + val; 
+});
 		}
 		
 
