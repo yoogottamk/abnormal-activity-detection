@@ -3,7 +3,7 @@ import re
 
 from invoker import start, terminate
 
-for logFile in sys.argv[1:]:
+def getCheckerOutputFromLog(logFile):
     with open(logFile, "r") as f:
         text = f.read()
 
@@ -13,4 +13,4 @@ for logFile in sys.argv[1:]:
     output, err = proc.communicate((''.join(vals) + " -1\n").encode())
     terminate(proc)
 
-    print(output)
+    return output.decode("utf-8")

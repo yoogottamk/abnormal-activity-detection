@@ -1,3 +1,10 @@
+"""
+The length of this code went from 30 lines to >200 on the deployment
+day, after 2AM late night (early morning?)
+
+Please don't judge
+"""
+
 from flask import Flask, request, render_template, jsonify
 from datetime import datetime
 import threading
@@ -11,6 +18,29 @@ from invoker import start, read, write, terminate
 from bot import send_text, send_graph
 
 
+ESP_DOWN_FILENAME = "../ESP_DOWN"
+SERVER_DOWN_FILENAME = "../SERVER_DOWN"
+BUZZ_NEXT = False
+
+lastSentToOneM2M = time.time()
+RATE_LIMIT_OM2M = 60
+
+# all input data we have received so far
+# and our corresponding output on it
+data_so_far = [["1"], ["0"]]
+last_updated_data = ""
+seconds_to_keep_for = 10
+samples_per_sec = 600
+data_count_to_retain = samples_per_sec * seconds_to_keep_for
+graph_step = seconds_to_keep_for / data_count_to_retain
+BUZZ_ENABLED = True
+reg = re.compile(r"(\d{3})")
+rep = r"\1 "
+freg = r" "
+frep = r"0\n"
+SEP = " "
+
+
 def append_to_file(fname, data):
     with open(fname, "a+") as f:
         f.write(data)
@@ -21,25 +51,14 @@ def write_to_file(fname, data):
         f.write(data)
 
 
-app = Flask(__name__, static_folder="static")
-
-ESP_DOWN_FILENAME = "../ESP_DOWN"
-SERVER_DOWN_FILENAME = "../SERVER_DOWN"
-BUZZ_NEXT = False
-
-lastSentToOneM2M = time.time()
-RATE_LIMIT_OM2M = 60
-
-
 def currentTimestampFormatted():
     now = datetime.now()
     # dd/mm/YY H:M:S
     dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
     return dt_string
 
+
 # send val to IIIT onem2m server
-
-
 def sendOneM2Mrequest(val):
     global lastSentToOneM2M
     if int(time.time()) - lastSentToOneM2M < RATE_LIMIT_OM2M:
@@ -72,22 +91,6 @@ def sendOneM2Mrequest(val):
     # print(r)
 
 
-# all input data we have received so far
-# and our corresponding output on it
-data_so_far = [["1"], ["0"]]
-last_updated_data = ""
-seconds_to_keep_for = 10
-samples_per_sec = 600
-data_count_to_retain = samples_per_sec * seconds_to_keep_for
-graph_step = seconds_to_keep_for / data_count_to_retain
-BUZZ_ENABLED = True
-reg = re.compile(r"(\d{3})")
-rep = r"\1 "
-freg = r" "
-frep = r"0\n"
-SEP = " "
-
-
 def extras(response, output, shouldBuzzerBlow):
     global data_so_far
     global last_updated_data
@@ -114,6 +117,8 @@ def extras(response, output, shouldBuzzerBlow):
 
     sendOneM2Mrequest(shouldBuzzerBlow)
 
+
+app = Flask(__name__, static_folder="static")
 
 @app.route("/", methods=["POST", "GET"])
 def evaluate_data():
