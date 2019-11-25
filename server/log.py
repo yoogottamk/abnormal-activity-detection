@@ -6,7 +6,7 @@ import numpy as np
 
 from invoker import start, terminate
 
-VALUES_PER_SECOND = 1200
+VALUES_PER_ITERATION = 1200
 
 def getCheckerOutputFromLog(logFile):
     if not os.path.exists(logFile):
@@ -17,7 +17,7 @@ def getCheckerOutputFromLog(logFile):
         text = f.read()
 
     vals = np.array(list(map(lambda x: ('0'*(4 - len(x)) + x)[:-1], text.split("\n")[:-1])))
-    splits = np.array_split(vals, len(vals) / VALUES_PER_SECOND)
+    splits = np.array_split(vals, len(vals) // VALUES_PER_ITERATION)
 
     output = []
     f = 0
@@ -25,7 +25,7 @@ def getCheckerOutputFromLog(logFile):
     for split in splits:
         print(f"{logFile} {f}   ", end='\r')
         f += 1
-        inp = ''.join(list(split)) + " -1\n"
+        inp = ''.join(list(split)) + "\n-1\n"
 
         proc = start("./checker")
         out, err = proc.communicate(inp.encode())
@@ -46,4 +46,14 @@ def getDayLog(year,month,date):
 
     return out
 
-print(getDayLog(2019,11,10))
+def getPastSevenDaysLogs():
+    today = dt.date.today()
+
+    daily = []
+    count = 0
+
+    for d in range(7):
+        prevDate = today - dt.timedelta(d)
+        daily.append(getDayLog(prevDate.year, prevDate.month, prevDate.day))
+
+    return daily
