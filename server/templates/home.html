@@ -84,32 +84,55 @@
             </div><!--/.row-->
 
             <div class="row">
-                <canvas id="quarter-anomaly">
+                <div class="col-md-12">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            Number of anomalies per quarter today
+                            <span class="pull-right clickable panel-toggle panel-button-tab-left"><em class="fa fa-toggle-up"></em></span>
+                        </div>
+                        <div class="panel-body">
+                            <div class="canvas-wrapper" style="width: 100%; height: 100%;">
+                                <canvas id="quarter-anomaly">
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="row">
-                <canvas id="weekly-anomaly">
+                <div class="col-md-12">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            Number of anomalies per day of this week
+                            <span class="pull-right clickable panel-toggle panel-button-tab-left"><em class="fa fa-toggle-up"></em></span>
+                        </div>
+                        <div class="panel-body">
+                            <div class="canvas-wrapper" style="width: 100%; height: 100%;">
+                                <canvas id="weekly-anomaly">
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
 
 
-        <script src="{{url_for('static', filename='js/jquery-1.11.1.min.js') }}"></script>
-        <script src="{{url_for('static', filename='js/bootstrap.min.js') }}"></script>
-        <script src="{{url_for('static', filename='js/easypiechart.js') }}"></script>
-        <script src="{{url_for('static', filename='js/easypiechart-data.js') }}"></script>
-        <script src="{{url_for('static', filename='js/bootstrap-datepicker.js') }}"></script>
-        <script src="{{url_for('static', filename='js/custom.js') }}"></script>
-        <script src="{{url_for('static', filename='js/plot.js') }}"></script>
+            <script src="{{url_for('static', filename='js/jquery-1.11.1.min.js') }}"></script>
+            <script src="{{url_for('static', filename='js/bootstrap.min.js') }}"></script>
+            <script src="{{url_for('static', filename='js/easypiechart.js') }}"></script>
+            <script src="{{url_for('static', filename='js/easypiechart-data.js') }}"></script>
+            <script src="{{url_for('static', filename='js/bootstrap-datepicker.js') }}"></script>
+            <script src="{{url_for('static', filename='js/custom.js') }}"></script>
+            <script src="{{url_for('static', filename='js/plot.js') }}"></script>
 
-        <script>
-            function query2(endpoint, callback){
-                var oReq = new XMLHttpRequest();
-                oReq.addEventListener("load", (resp) => {
-                    resp = JSON.parse(resp.target.response);
-                    callback(resp);
-                });
-                oReq.open("GET", "/" + endpoint + "/");
-                oReq.send();
-            }
+            <script>
+                function query2(endpoint, callback){
+                    var oReq = new XMLHttpRequest();
+                    oReq.addEventListener("load", (resp) => {
+                        resp = JSON.parse(resp.target.response);
+                        callback(resp);
+                    });
+                    oReq.open("GET", "/" + endpoint + "/");
+                    oReq.send();
+                }
 
 const endPoints = ["anomaly-today", "anomaly-week", "weekly-anomaly-change"];
 
@@ -184,6 +207,10 @@ query2("bar-graph-weekly", res => {
                 yAxes:
                 [{
                     display: true,
+                    ticks: {
+                        beginAtZero: true,
+                        callback: function(value) {if (value % 1 === 0) {return value;}}
+                    },
                     scaleLabel: {
                         display: true,
                         labelString: 'Quarter'
@@ -199,8 +226,6 @@ query2("bar-graph-weekly", res => {
 query2("bar-graph-day", res => {
     const ch2 = document.getElementById("quarter-anomaly");
     const ctx = ch2.getContext("2d");
-
-    console.log(res);
 
     let color = Chart.helpers.color;
     new Chart(ctx, {
@@ -231,6 +256,10 @@ query2("bar-graph-day", res => {
                 yAxes:
                 [{
                     display: true,
+                    ticks: {
+                        beginAtZero: true,
+                        callback: function(value) {if (value % 1 === 0) {return value;}}
+                    },
                     scaleLabel: {
                         display: true,
                         labelString: 'Quarter'
@@ -255,13 +284,13 @@ window.addEventListener("load", function(){
     window.duration = duration;
     processData(inString, outString, step, AUTO_RELOAD_ENABLED);
 });
-        </script>
+            </script>
 
-        <style>
+            <style>
 #myChart{
     margin: 0;
     height: 30% !important;
 }
-        </style>
+            </style>
     </body>
 </html>
