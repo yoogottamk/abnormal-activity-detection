@@ -25,16 +25,8 @@
             const inString = `{{input}}`.trim();
             const outString = `{{output}}`.trim();
             const step = `{{step}}`.trim();
-            const timestamp = `{{timestamp}}`.trim();
-	
 
-            const inData = inString.split(" ").map(x => parseInt(x) * 10 + Math.floor(Math.random()*10));
-            const outData = outString.split(" ").map(x => parseInt(x));
-
-            window.plot(inData, outData, step);
-
-            if(AUTO_RELOAD_ENABLED)
-                window.setTimeout(() => window.location.reload(), AUTO_RELOAD_TIME);
+            processData(inString, outString, step, AUTO_RELOAD_ENABLED);
         });
     </script>
 
