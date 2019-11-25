@@ -21,7 +21,7 @@
                 <div class="navbar-header">
                     <a class="navbar-brand" href="#">Team 34 - ESP data dashboard</a>
                     <!-- TODO fix positioning -->
-                    <a class="navbar-item" style="color: white; height: 100%; display: inline-block; line-height: 100%;">
+                    <a class="navbar-brand" style="text-transform: unset;">
                         Last updated: {{timestamp}}
                     </a>
                 </div>
@@ -84,44 +84,10 @@
             </div><!--/.row-->
 
             <div class="row">
-                <!--
-                    <div class="col-xs-6 col-md-3">
-                    <div class="panel panel-default">
-                    <div class="panel-body easypiechart-panel">
-                    <h4>New Orders</h4>
-                    <div class="easypiechart" id="easypiechart-blue" data-percent="92" ><span class="percent">92%</span></div>
-                    </div>
-                    </div>
-                    </div>
-
-                    <div class="col-xs-6 col-md-3">
-                    <div class="panel panel-default">
-                    <div class="panel-body easypiechart-panel">
-                    <h4>Comments</h4>
-                    <div class="easypiechart" id="easypiechart-orange" data-percent="65" ><span class="percent">65%</span></div>
-                    </div>
-                    </div>
-                    </div>
-
-                    <div class="col-xs-6 col-md-3">
-                    <div class="panel panel-default">
-                    <div class="panel-body easypiechart-panel">
-                    <h4>New Users</h4>
-                    <div class="easypiechart" id="easypiechart-teal" data-percent="56" ><span class="percent">56%</span></div>
-                    </div>
-                    </div>
-                    </div>
-
-                    <div class="col-xs-6 col-md-3">
-                    <div class="panel panel-default">
-                    <div class="panel-body easypiechart-panel">
-                    <h4>Visitors</h4>
-                    <div class="easypiechart" id="easypiechart-red" data-percent="27" ><span class="percent">27%</span></div>
-                    </div>
-                    </div>
-                    </div>
-                -->
                 <canvas id="quarter-anomaly">
+            </div>
+            <div class="row">
+                <canvas id="weekly-anomaly">
             </div>
         </div>
 
@@ -151,11 +117,16 @@ query2("top-order-json", res => {
     endPoints.forEach(endpoint => {
         let value = res[endpoint];
 
-        if(Array.isArray(value))
-        {
-            let [val, choose] = value;
+        if(endpoint === "weekly-anomaly-change") {
+            let isneg = value< 0;
+            let choose = isneg ? "down" : "up";
+            value = Math.abs(value);
             document.getElementsByClassName("fa-arrow-circle-" + choose)[0].style.display = "inline-block";
-            document.getElementsByClassName(endpoint)[0].innerHTML = val;
+            let elmEnd = 
+                document.getElementsByClassName(endpoint)[0];
+            elmEnd.innerHTML = value;
+            elmEnd.nextElementSibling.innerHTML = (isneg ? "Lesser" : "Higher") + " anomalies this week";
+
         }
         else
             document.getElementsByClassName(endpoint)[0].innerHTML = value;
@@ -164,35 +135,40 @@ query2("top-order-json", res => {
 
 
 window.chartColors = {
-	red: 'rgb(255, 99, 132)',
-	orange: 'rgb(255, 159, 64)',
-	yellow: 'rgb(255, 205, 86)',
-	green: 'rgb(75, 192, 192)',
-	blue: 'rgb(54, 162, 235)',
-	purple: 'rgb(153, 102, 255)',
-	grey: 'rgb(201, 203, 207)'
+    red: 'rgb(255, 99, 132)',
+    orange: 'rgb(255, 159, 64)',
+    yellow: 'rgb(255, 205, 86)',
+    green: 'rgb(75, 192, 192)',
+    blue: 'rgb(54, 162, 235)',
+    purple: 'rgb(153, 102, 255)',
+    grey: 'rgb(201, 203, 207)'
 };
 
-query2("bar-graph-day", res => {
-    const ch2 = document.getElementById("quarter-anomaly");
+query2("bar-graph-weekly", res => {
+    const ch2 = document.getElementById("weekly-anomaly");
     const ctx = ch2.getContext("2d");
 
-	console.log(res);
-
     let color = Chart.helpers.color;
+
+    let date = new Date().getDate();
+    let labels = [];
+    for(let i = 0; i < 7; i++){
+        labels.unshift(date - i);
+    }
+
     new Chart(ctx, {
         "type": "bar",
         "data": {
-	    labels: ["0000-0600", "0600-1200", "1200-1800", "1800-2400"],
+            labels,
             datasets: [{
-	        label: "Number of anomalies in each quarter of the day",
+                label: "Number of anomalies in each week of the day",
                 data: res,
-		    backgroundColor: color(window.chartColors.blue).alpha(0.5).rgbString(),
-				borderColor: window.chartColors.blue,
+                backgroundColor: color(window.chartColors.blue).alpha(0.5).rgbString(),
+                borderColor: window.chartColors.blue,
             }]
         },
         "options": {
-         	responsive: true,
+            responsive: true,
             scales: {
                 xAxes: [{
                     gridLines: {
@@ -206,13 +182,60 @@ query2("bar-graph-day", res => {
                     }
                 }],
                 yAxes:
-                 [{
+                [{
                     display: true,
                     scaleLabel: {
                         display: true,
                         labelString: 'Quarter'
                     }
-                 }]
+                }]
+            }
+        }
+    });
+    console.log(res);
+});
+
+
+query2("bar-graph-day", res => {
+    const ch2 = document.getElementById("quarter-anomaly");
+    const ctx = ch2.getContext("2d");
+
+    console.log(res);
+
+    let color = Chart.helpers.color;
+    new Chart(ctx, {
+        "type": "bar",
+        "data": {
+            labels: ["0000-0600", "0600-1200", "1200-1800", "1800-2400"],
+            datasets: [{
+                label: "Number of anomalies in each quarter of the day",
+                data: res,
+                backgroundColor: color(window.chartColors.blue).alpha(0.5).rgbString(),
+                borderColor: window.chartColors.blue,
+            }]
+        },
+        "options": {
+            responsive: true,
+            scales: {
+                xAxes: [{
+                    gridLines: {
+                        offsetGridLines: true
+                    },
+
+                    display: true,
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'Anomaly count'
+                    }
+                }],
+                yAxes:
+                [{
+                    display: true,
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'Quarter'
+                    }
+                }]
             }
         }
     });
