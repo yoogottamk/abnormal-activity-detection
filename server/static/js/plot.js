@@ -27,17 +27,24 @@ window.plot = function (inData, outData, step) {
         data: {
             labels,
             datasets: [{
-                borderColor: shouldColorRed ? red : normal,
-                //		backgroundColor: "rgba(255,0,0,0)",
-                fill: false,
-                label: 'ESP data for last ten seconds',
+                label: "Sound intensity for last ten seconds",
+                /* TODO make it red too! */
+                fillColor: "rgba(220,220,220,0.2)",
+                strokeColor: "rgba(220,220,220,1)",
+                pointColor: "rgba(220,220,220,1)",
+                pointStrokeColor: "#fff",
+                pointHighlightFill: "#fff",
+                pointHighlightStroke: "rgba(220,220,220,1)",
                 data: inData
             }]
         },
         options: {
             animation: {
-                duration: 0,
+                duration: 1000,
             },
+            scaleLineColor: "rgba(0,0,0,.2)",
+            scaleGridLineColor: "rgba(0,0,0,.05)",
+            scaleFontColor: "#c5c7cc",
             responsive: true,
             title: {
                 display: true,
@@ -80,7 +87,7 @@ const REFRESH_INTERVAL = 500;
 function query(step) {
     var oReq = new XMLHttpRequest();
     oReq.addEventListener("load", (resp) => {
-	resp = JSON.parse(resp.target.response);
+        resp = JSON.parse(resp.target.response);
         processData(resp.input, resp.output, step, true);
     });
     oReq.open("GET", "/get-data/");
