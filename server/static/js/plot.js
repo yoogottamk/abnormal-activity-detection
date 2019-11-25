@@ -9,7 +9,7 @@ window.plot = function (inData, outData, step) {
     const ctx = canvas.getContext('2d');
     const labels = [];
     step = round(step);
-let c = 0;
+    let c = 0;
 
     for (let i = 1, len = inData.length; i <= len; i++) {
         labels.push(round(c));
@@ -24,69 +24,57 @@ let c = 0;
     let shouldColorRed = outData.indexOf(1) != -1;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    new Chart(ctx).Line({
-        labels,
-        datasets: [{
-            label: "Sound intensity for last ten seconds",
-            /* TODO make it red too! */
-            borderColor: shouldColorRed ? red : normal,
-            /*
-        fillColor: "rgba(220,220,220,0.2)",
-        strokeColor: "rgba(220,220,220,1)",
-        pointColor: "rgba(220,220,220,1)",
-        pointStrokeColor: "#fff",
-        pointHighlightFill: "#fff",
-        pointHighlightStroke: "rgba(220,220,220,1)",
-        */
-            fill: false,
-            data: inData
-        }]
-    }/*,
-        {
-        responsive: true,
-            /*
-        scaleLineColor: "rgba(0,0,0,.2)",
-        segmentShowStroke: false,
-
-
-        animation: {
-        duration: 0,
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [{
+                borderColor: shouldColorRed ? red : normal,
+                //		backgroundColor: "rgba(255,0,0,0)",
+                fill: false,
+                label: 'ESP data for last ten seconds',
+                data: inData
+            }]
         },
-        title: {
-        display: true,
-        text: 'ESP data'
-        },
-        tooltips: {
-        mode: 'index',
-        intersect: false,
-        },
-        hover: {
-        mode: 'nearest',
-        intersect: true
-        },
-
-        scales: {
-        xAxes: [{
-            display: true,
-            scaleLabel: {
-            display: true,
-            labelString: 'Seconds'
-            }
-        }],
-        yAxes: [{
-            display: true,
-            ticks: {
-            max: 4095,
-            min: 0
+        options: {
+            animation: {
+                duration: 0,
             },
-            scaleLabel: {
-            display: true,
-            labelString: 'Value (volts)'
+            responsive: true,
+            title: {
+                display: true,
+                text: 'ESP data'
+            },
+            tooltips: {
+                mode: 'index',
+                intersect: false,
+            },
+            hover: {
+                mode: 'nearest',
+                intersect: true
+            },
+            scales: {
+                xAxes: [{
+                    display: true,
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'Seconds'
+                    }
+                }],
+                yAxes: [{
+                    display: true,
+                    ticks: {
+                        max: 4095,
+                        min: 0
+                    },
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'Value (volts)'
+                    }
+                }]
             }
-        }]
         }
-    }*/
-        );
+    });
 };
 
 const REFRESH_INTERVAL = 500;
