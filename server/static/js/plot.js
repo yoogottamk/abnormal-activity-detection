@@ -75,30 +75,25 @@ window.plot = function (inData, outData, step) {
     });
 };
 
-const REFRESH_INTERVAL = 1000;
+const REFRESH_INTERVAL = 500;
 
-function query() {
+function query(step) {
     var oReq = new XMLHttpRequest();
     oReq.addEventListener("load", (resp) => {
-        console.log(resp);
-        processData(resp);
+	resp = JSON.parse(resp.target.response);
+        processData(resp.input, resp.output, step, true);
     });
     oReq.open("GET", "/get-data/");
     oReq.send();
 }
 
 window.processData = function (inString, outString, step, AUTO_RELOAD_ENABLED) {
-    if (!inString) {
-        query();
-        return;
-    }
-
     const inData = inString.split(" ").map(x => parseInt(x) * 10 + Math.floor(Math.random() * 10));
     const outData = outString.split(" ").map(x => parseInt(x));
 
     window.plot(inData, outData, step);
 
     if (AUTO_RELOAD_ENABLED) {
-        setTimeout(processData, REFRESH_INTERVAL, this.undefined, this.undefined, step, true);
+        setTimeout(query, REFRESH_INTERVAL, step);
     }
 };
