@@ -12,6 +12,7 @@
 	<!--Custom Font-->
 	<link href="https://fonts.googleapis.com/css?family=Montserrat:300,300i,400,400i,500,500i,600,600i,700,700i" rel="stylesheet">
 
+	<!-- <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"> -->
 	<script src="https://kit.fontawesome.com/a9e704d549.js" crossorigin="anonymous"></script>
 </head>
 <body>
@@ -36,21 +37,31 @@
 
 		<div class="panel panel-container">
 			<div class="row">
-				<div class="col-xs-6 col-md-6 col-lg-6 no-padding">
+				<div class="col-xs-4 col-md-4 col-lg-4 no-padding">
 					<div class="panel panel-teal panel-widget border-right">
 						<div class="row no-padding">
 							<em class="fa fa-xl fa-calendar-day color-blue"></em>
-							<div class="large">120</div>
+							<div class="large daily-anomaly">-1</div>
 							<div class="text-muted">Anomalies detected today</div>
 						</div>
 					</div>
 				</div>
-				<div class="col-xs-6 col-md-6 col-lg-6 no-padding">
+				<div class="col-xs-4 col-md-4 col-lg-4 no-padding">
 					<div class="panel panel-blue panel-widget border-right">
 						<div class="row no-padding">
 							<em class="fa fa-xl fa-calendar-week color-blue"></em>
-							<div class="large">52</div>
+							<div class="large weekly-anomaly">-1</div>
 							<div class="text-muted">Anomalies detected this week</div>
+						</div>
+					</div>
+				</div>
+				<div class="col-xs-4 col-md-4 col-lg-4 no-padding">
+					<div class="panel panel-blue panel-widget border-right">
+						<div class="row no-padding">
+							<em class="fa fa-xl fa-arrow-circle-up color-red"></em>
+							<em class="fa fa-xl fa-arrow-circle-down" style="color: green;"></em>
+							<div class="large change-percent">-1%</div>
+							<div class="text-muted">Change in anomalies this week</div>
 						</div>
 					</div>
 				</div>
@@ -98,6 +109,7 @@
 					</div>
 				</div>
 			</div>
+
 			<div class="col-xs-6 col-md-3">
 				<div class="panel panel-default">
 					<div class="panel-body easypiechart-panel">
@@ -106,6 +118,7 @@
 					</div>
 				</div>
 			</div>
+
 			<div class="col-xs-6 col-md-3">
 				<div class="panel panel-default">
 					<div class="panel-body easypiechart-panel">
@@ -114,6 +127,7 @@
 					</div>
 				</div>
 			</div>
+
 			<div class="col-xs-6 col-md-3">
 				<div class="panel panel-default">
 					<div class="panel-body easypiechart-panel">
@@ -135,6 +149,7 @@
 	<script src="{{url_for('static', filename='js/bootstrap-datepicker.js') }}"></script>
 	<script src="{{url_for('static', filename='js/custom.js') }}"></script>
 	<script src="{{url_for('static', filename='js/plot.js') }}"></script>
+
 	<script>
         const AUTO_RELOAD_TIME = 2000;
         let AUTO_RELOAD_ENABLED = true;
@@ -151,6 +166,7 @@
             processData(inString, outString, step, AUTO_RELOAD_ENABLED);
         });
 	</script>
+
     <style>
         #myChart{
             margin: 0;
