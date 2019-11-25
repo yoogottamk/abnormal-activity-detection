@@ -10,31 +10,40 @@ VALUES_PER_SECOND = 1200
 
 def getCheckerOutputFromLog(logFile):
     if not os.path.exists(logFile):
+        print(f"File {logFile} not found")
         return ""
 
     with open(logFile, "r") as f:
         text = f.read()
 
-    vals = list(map(lambda x: ('0'*(4 - len(x)) + x)[:-1], text.split("\n")[:-1]))
-
-    proc = start("./checker")
-    output, err = proc.communicate((''.join(vals) + " -1\n").encode())
-    terminate(proc)
-
-    out = np.array(list(output.decode("utf-8")))
-
-    splits = np.array_split(out, VALUES_PER_SECOND)
+    vals = np.array(list(map(lambda x: ('0'*(4 - len(x)) + x)[:-1], text.split("\n")[:-1])))
+    splits = np.array_split(vals, len(vals) / VALUES_PER_SECOND)
 
     output = []
+    f = 0
 
     for split in splits:
-        output.append('1' if '1' in split else '0')
+        print(f"{logFile} {f}   ", end='\r')
+        f += 1
+        inp = ''.join(list(split)) + " -1\n"
+
+        proc = start("./checker")
+        out, err = proc.communicate(inp.encode())
+        terminate(proc)
+
+        output.append('1' if '1' in out.decode("utf-8") else '0')
 
     return ''.join(output)
 
 
 def getHourLog(year,month,date,hour):
-    return getCheckerOutputFromLog(f"../data/${year}-${month}-${date}_${hour}.log")
+    return getCheckerOutputFromLog(f"../data/{year}-{month}-{date}_{hour}.log")
 
 def getDayLog(year,month,date):
-    pass
+    out = ''
+    for hour in range(24):
+        out += getHourLog(year,month,date,f"{hour:02d}")
+
+    return out
+
+print(getDayLog(2019,11,10))
