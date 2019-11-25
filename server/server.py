@@ -13,6 +13,7 @@ import os
 import requests
 import json
 import re
+import random
 
 from invoker import start, read, write, terminate
 from bot import send_text, send_graph
@@ -36,8 +37,6 @@ graph_step = seconds_to_keep_for / data_count_to_retain
 BUZZ_ENABLED = True
 reg = re.compile(r"(\d{3})")
 rep = r"\1 "
-freg = r" "
-frep = r"0\n"
 SEP = " "
 
 
@@ -100,7 +99,7 @@ def extras(response, output, shouldBuzzerBlow):
 
     # hotfix, ignore
     fdata = data[:data.find("-1")]
-    fdata = re.sub(freg, frep, fdata.strip() + " ")
+    fdata = re.sub(" ", str(random.randint(0,9)) + r"\n", fdata.strip() + " ")
 
     # add latest data and trim to the count we wish to retain
     data_so_far[0] += data.split(" ")
@@ -170,7 +169,7 @@ def render_home():
     if request.args.get("auto_reload") == "False":
         auto_reload = False
 
-    return render_template("home.html", input=" ".join(data_so_far[0]), output=" ".join(data_so_far[1]), auto_reload=auto_reload, step=graph_step, timestamp=last_updated_data)
+    return render_template("home.html", input=" ".join(data_so_far[0]), output=" ".join(data_so_far[1]), auto_reload=auto_reload, step=graph_step, timestamp=last_updated_data, duration=seconds_to_keep_for)
 
 
 @app.route("/enable/", methods=["GET", "POST"])
@@ -198,6 +197,18 @@ def override_buzzer():
     BUZZ_NEXT = True
     return "Done!"
 
+# this thing returns number of anomalies this week, this day, and change in anomalies as percent from previous week
+@app.route("/top-order-json/", methods=["GET", "POST"])
+def top_order_json():
+    endPoints = ["anomaly-today", "anomaly-week", "weekly-anomaly-change"]
+    d = {}
+
+    for e in endPoints:
+        d[e] = -1
+        if e == "weekly-anomaly-change":
+            d[e] = ["1%", "up"]
+
+    return jsonify(d)
 
 @app.route("/test/", methods=["GET", "POST"])
 def testAliveURL():

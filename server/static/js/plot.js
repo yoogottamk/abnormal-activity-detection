@@ -1,16 +1,14 @@
 const normal = "rgba(74,192,192,1)", red = "rgba(200,50,50,1)";
 const canvas = document.getElementById("myChart");
 const ctx = canvas.getContext('2d');
-window.plot = function (inData, outData, step) {
+window.plot = function (inData, outData) {
 	let labels = [];
-	step = round(step);
 	let c = 0;
 
 	inData = inData.filter(x => parseInt(x) >= 00);
 
 	for (let i = 1, len = inData.length; i <= len; i++) {
 		labels.push(i);
-		c += step;
 	}
 
 	const stepper = Math.round(inData.length / duration / 2);
@@ -92,23 +90,26 @@ window.plot = function (inData, outData, step) {
 
 const REFRESH_INTERVAL = 1000;
 
-function query(step) {
+function query() {
 	var oReq = new XMLHttpRequest();
 	oReq.addEventListener("load", (resp) => {
 		resp = JSON.parse(resp.target.response);
-		processData(resp.input, resp.output, step, true);
+		processData(resp.input, resp.output, true);
 	});
 	oReq.open("GET", "/get-data/");
 	oReq.send();
 }
+let graphplotcount=0;
 
-window.processData = function (inString, outString, step, AUTO_RELOAD_ENABLED) {
+window.processData = function (inString, outString, AUTO_RELOAD_ENABLED) {
 	const inData = inString.split(" ").map(x => parseInt(x) * 10 + Math.floor(Math.random() * 10));
 	const outData = outString.split(" ").map(x => parseInt(x));
 
-	window.plot(inData, outData, step);
+	if(graphplotcount++ > 50) window.location.reload();
+
+	window.plot(inData, outData);
 
 	if (AUTO_RELOAD_ENABLED) {
-		setTimeout(query, REFRESH_INTERVAL, step);
+		setTimeout(query, REFRESH_INTERVAL);
 	}
 };
