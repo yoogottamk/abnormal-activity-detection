@@ -1,63 +1,357 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Team 34 - ESP data dashboard</title>
+        <link href="{{url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
+        <link href="{{url_for('static', filename='css/datepicker3.css') }}" rel="stylesheet">
+        <link href="{{url_for('static', filename='css/styles.css') }}" rel="stylesheet">
 
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+        <!--Custom Font-->
+        <link href="https://fonts.googleapis.com/css?family=Montserrat:300,300i,400,400i,500,500i,600,600i,700,700i" rel="stylesheet">
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.2/dist/Chart.min.js"></script>
-    <script src="{{url_for('static', filename='js/plot.js') }}"></script>
+        <!-- <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"> -->
+        <script src="https://kit.fontawesome.com/a9e704d549.js" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.min.js" integrity="sha256-R4pqcOYV8lt7snxMQO/HSbVCFRPMdrhAFMH+vr9giYI=" crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/2.1.2/sweetalert.min.js"></script>
+    </head>
+    <body>
+        <nav class="navbar navbar-custom navbar-fixed-top" role="navigation">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                    <a class="navbar-brand" href="#">Ambient Sound Analysis - Team 34</a>
+                    <a class="navbar-brand" style="text-transform: unset;">
+                        Last updated: {{timestamp}}
+                    </a>
+                </div>
+            </div><!-- /.container-fluid -->
+        </nav>
 
-    <script>
-        const AUTO_RELOAD_TIME = 2000;
-        let AUTO_RELOAD_ENABLED = true;
+        <div class="col-sm-10 col-sm-offset-1 col-lg-10 col-lg-offset-1 main">
+            <div class="row">
+                <div class="col-lg-12">
+                    <h1 class="page-header">Dashboard</h1>
+                </div>
+            </div><!--/.row-->
 
-        if(`{{auto_reload}}`.trim() == "False"){
-            AUTO_RELOAD_ENABLED = false;
+            <div class="panel panel-container">
+                <div class="row">
+                    <div class="col-xs-4 col-md-4 col-lg-4 no-padding">
+                        <div class="panel panel-teal panel-widget border-right">
+                            <div class="row no-padding">
+                                <em class="fa fa-xl fa-calendar-day color-blue"></em>
+                                <div class="large anomaly-today">-1</div>
+                                <div class="text-muted">Anomalies detected today</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xs-4 col-md-4 col-lg-4 no-padding">
+                        <div class="panel panel-blue panel-widget border-right">
+                            <div class="row no-padding">
+                                <em class="fa fa-xl fa-calendar-week color-blue"></em>
+                                <div class="large anomaly-week">-1</div>
+                                <div class="text-muted">Anomalies detected this week</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xs-4 col-md-4 col-lg-4 no-padding">
+                        <div class="panel panel-blue panel-widget border-right">
+                            <div class="row no-padding">
+                                <em class="fa fa-xl fa-arrow-circle-up color-red" style="display: none;"></em>
+                                <em class="fa fa-xl fa-arrow-circle-down" style="color: green; display: none;"></em>
+                                <div class="large weekly-anomaly-change">-1%</div>
+                                <div class="text-muted">Change in anomalies this week</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            Live ambient sound data 
+                        </div>
+                        <div class="panel-body">
+                            <div class="canvas-wrapper" style="width: 100%; height: 100%;">
+                                <canvas class="main-chart" id="myChart" height="800" width="1000"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div><!--/.row-->
+
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            Number of anomalies per quarter today
+                        </div>
+                        <div class="panel-body">
+                            <div class="canvas-wrapper" style="width: 100%; height: 100%;">
+                                <canvas id="quarter-anomaly">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            Number of anomalies per day of this week
+                        </div>
+                        <div class="panel-body">
+                            <div class="canvas-wrapper" style="width: 100%; height: 100%;">
+                                <canvas id="weekly-anomaly">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                         Enter the time machine! Download data for a specific date and hour
+                            <span class="pull-right clickable panel-toggle panel-button-tab-left"><em class="fa fa-toggle-up"></em></span>
+                        </div>
+                        <div class="panel-body panel-date">
+			    <input type="date">
+			    <input type="number" min="0" max="23">
+			    <button>Download</button>
+                        </div>
+                    </div>
+                </div>
+	    </div>
+	    <div class="row">
+	    </div>
+
+
+            <script src="{{url_for('static', filename='js/jquery-1.11.1.min.js') }}"></script>
+            <script src="{{url_for('static', filename='js/bootstrap.min.js') }}"></script>
+            <script src="{{url_for('static', filename='js/easypiechart.js') }}"></script>
+            <script src="{{url_for('static', filename='js/easypiechart-data.js') }}"></script>
+            <script src="{{url_for('static', filename='js/bootstrap-datepicker.js') }}"></script>
+            <script src="{{url_for('static', filename='js/custom.js') }}"></script>
+            <script src="{{url_for('static', filename='js/plot.js') }}"></script>
+
+            <script>
+                function query2(endpoint, callback, params){
+                    var oReq = new XMLHttpRequest();
+                    oReq.addEventListener("load", (resp) => {
+                        resp = JSON.parse(resp.target.response);
+                        callback(resp);
+                    });
+
+			if(params)
+                    oReq.open("GET", "/" + endpoint + "/" + params);
+			else 
+                    oReq.open("GET", "/" + endpoint + "/");
+                    oReq.send();
+                }
+
+const endPoints = ["anomaly-today", "anomaly-week", "weekly-anomaly-change"];
+const AUTO_RELOAD_TIME = 2000;
+
+setInterval(()=>{
+query2("top-order-json", res => {
+    endPoints.forEach(endpoint => {
+        let value = res[endpoint];
+
+        if(endpoint === "weekly-anomaly-change") {
+            let isneg = value< 0;
+            let choose = isneg ? "down" : "up";
+            value = Math.abs(value);
+            document.getElementsByClassName("fa-arrow-circle-" + choose)[0].style.display = "inline-block";
+            let elmEnd = 
+                document.getElementsByClassName(endpoint)[0];
+		value = Math.round(value);
+            elmEnd.innerHTML = value + "%";
+            elmEnd.nextElementSibling.innerHTML = (isneg ? "less" : "high") + " anomalies this week";
+
         }
+        else
+            document.getElementsByClassName(endpoint)[0].innerHTML = value;
+    });
+});
 
-        window.addEventListener("load", function(){
-            const inString = `{{input}}`.trim();
-            const outString = `{{output}}`.trim();
-            const step = `{{step}}`.trim();
-            const timestamp = `{{timestamp}}`.trim();
-	
 
-            const inData = inString.split(" ").map(x => parseInt(x) * 10 + Math.floor(Math.random()*10));
-            const outData = outString.split(" ").map(x => parseInt(x));
+window.chartColors = {
+    red: 'rgb(255, 99, 132)',
+    orange: 'rgb(255, 159, 64)',
+    yellow: 'rgb(255, 205, 86)',
+    green: 'rgb(75, 192, 192)',
+    blue: 'rgb(54, 162, 235)',
+    purple: 'rgb(153, 102, 255)',
+    grey: 'rgb(201, 203, 207)'
+};
 
-            window.plot(inData, outData, step);
+query2("bar-graph-weekly", res => {
+    const ch2 = document.getElementById("weekly-anomaly");
+    const ctx = ch2.getContext("2d");
 
-            if(AUTO_RELOAD_ENABLED)
-                window.setTimeout(() => window.location.reload(), AUTO_RELOAD_TIME);
-        });
-    </script>
+    let color = Chart.helpers.color;
 
-    <style>
-        #myChart{
-            margin: 0;
-            height: 30% !important;
+    let date = new Date().getDate();
+    let labels = [];
+    for(let i = 0; i < 7; i++){
+        labels.unshift(date - i);
+    }
+	res=res.reverse();
+
+    new Chart(ctx, {
+        "type": "bar",
+        "data": {
+            labels,
+            datasets: [{
+                label: "Number of anomalies in each day of the week",
+                data: res,
+                backgroundColor: color(window.chartColors.blue).alpha(0.5).rgbString(),
+                borderColor: window.chartColors.blue,
+            }]
+        },
+        "options": {
+            responsive: true,
+		animation:{
+			duration:0
+		},
+            scales: {
+                xAxes: [{
+                    gridLines: {
+                        offsetGridLines: true
+                    },
+
+                    display: true,
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'Anomaly count'
+                    }
+                }],
+                yAxes:
+                [{
+                    display: true,
+                    ticks: {
+                        beginAtZero: true,
+                        callback: function(value) {if (value % 1 === 0) {return value;}}
+                    },
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'Quarter'
+                    }
+                }]
+            }
         }
-    </style>
-    <title>Team 34 - ESP data dashboard</title>
-</head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <a class="navbar-brand" href="#">Team 34 - ESP data dashboard</a>
-	<a class="navbar-item" style="color: white;">
-		Last updated: {{timestamp}}
-	</a>
-    </nav>
+    });
+    console.log(res);
+});
 
-    <div class="container-fluid container">
-        <div class="row">
-            <canvas id="myChart" width="400" height="400"></canvas>
-        </div>
-    </div>
-</body>
+
+query2("bar-graph-day", res => {
+    const ch2 = document.getElementById("quarter-anomaly");
+    const ctx = ch2.getContext("2d");
+
+    let color = Chart.helpers.color;
+    new Chart(ctx, {
+        "type": "bar",
+        "data": {
+            labels: ["0000-0600", "0600-1200", "1200-1800", "1800-2400"],
+            datasets: [{
+                label: "Number of anomalies in each quarter of the day",
+                data: res.reverse(),
+                backgroundColor: color(window.chartColors.blue).alpha(0.5).rgbString(),
+                borderColor: window.chartColors.blue,
+            }]
+        },
+        "options": {
+            responsive: true,
+		animation:{
+			duration:0
+		},
+            scales: {
+                xAxes: [{
+                    gridLines: {
+                        offsetGridLines: true
+                    },
+
+                    display: true,
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'Anomaly count'
+                    }
+                }],
+                yAxes:
+                [{
+                    display: true,
+                    ticks: {
+                        beginAtZero: true,
+                        callback: function(value) {if (value % 1 === 0) {return value;}}
+                    },
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'Quarter'
+                    }
+                }]
+            }
+        }
+    });
+})
+},AUTO_RELOAD_TIME);
+
+let AUTO_RELOAD_ENABLED = true;
+if(`{{auto_reload}}`.trim() == "False"){
+    AUTO_RELOAD_ENABLED = false;
+}
+
+window.addEventListener("load", function(){
+    const inString = `{{input}}`.trim();
+    const outString = `{{output}}`.trim();
+    const step = `{{step}}`.trim();
+    const duration = `{{duration}}`.trim();
+    window.duration = duration;
+
+
+	const panel = document.getElementsByClassName("panel-date")[0];
+	const inp = panel.firstElementChild;
+	const inp2 = panel.children[1];
+	const btn = panel.children[2];
+
+	btn.onclick = function(){
+		let hour = parseInt(inp2.value);
+		let val = inp.value + "-" + hour;
+		let v2 = inp.value.split("-");
+		let year = parseInt(v2[0]);
+		let month = parseInt(v2[1]);
+		let day = parseInt(v2[2]);
+
+		if(year<2019||month<11||day<7){
+			swal("Aw, snap!", "We didn't deploy before this date", "error");
+		} else if(((new Date(inp.value+":"+hour+":00:00").getTime()/1000)|0) > Date.now()/1000){
+			swal("Woah!", "Don't rush to the future yet buddy, we ain't there yet!", "error");
+		}else{			
+			swal({
+  title: "Great!",
+  text: "Your data is on the way!",
+  icon: "success",
+  button: true,
+})
+.then((willDelete) => {
+ window.location.href = "/get-day-log/" + val; 
+});
+		}
+		
+
+	};
+    processData(inString, outString, step, AUTO_RELOAD_ENABLED);
+});
+            </script>
+
+            <style>
+#myChart{
+    margin: 0;
+    height: 30% !important;
+}
+            </style>
+    </body>
 </html>

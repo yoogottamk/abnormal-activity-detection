@@ -1,36 +1,65 @@
-from flask import Flask, request, render_template
-from datetime import datetime
+"""
+The length of this code went from 30 lines to >200 on the deployment
+day, after 2AM late night (early morning?)
+
+Please don't judge
+"""
+
+from flask import Flask, request, render_template, jsonify, send_file
+import datetime as dt
 import threading
 import time
 import os
-import requests, json
+import requests
+import json
 import re
+import random
+from shutil import copyfile
 
 from invoker import start, read, write, terminate
 from bot import send_text, send_graph
+from analytics import getDailyCount, getWeeklyCount, getQuarterCount
+from log import getCheckerOutputFromLog
+
+
+ESP_DOWN_FILENAME = "../ESP_DOWN"
+SERVER_DOWN_FILENAME = "../SERVER_DOWN"
+BUZZ_NEXT = False
+OUTPUT_LOG_FILE = "output"
+
+lastSentToOneM2M = time.time()
+RATE_LIMIT_OM2M = 60
+
+# all input data we have received so far
+# and our corresponding output on it
+data_so_far = [["1"], ["0"]]
+last_updated_data = ""
+seconds_to_keep_for = 10
+samples_per_sec = 400
+data_count_to_retain = samples_per_sec * seconds_to_keep_for
+graph_step = seconds_to_keep_for / data_count_to_retain
+BUZZ_ENABLED = True
+reg = re.compile(r"(\d{3})")
+rep = r"\1 "
+SEP = " "
+
 
 def append_to_file(fname, data):
     with open(fname, "a+") as f:
         f.write(data)
 
+
 def write_to_file(fname, data):
     with open(fname, "w+") as f:
         f.write(data)
 
-app = Flask(__name__, static_folder ="static")
-
-ESP_DOWN_FILENAME = "../ESP_DOWN"
-SERVER_DOWN_FILENAME = "../SERVER_DOWN"
-BUZZ_NEXT = False
-
-lastSentToOneM2M = time.time()
-RATE_LIMIT_OM2M = 60
 
 def currentTimestampFormatted():
-    now = datetime.now()
+    now = dt.datetime.now()
     # dd/mm/YY H:M:S
     dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
     return dt_string
+
 
 # send val to IIIT onem2m server
 def sendOneM2Mrequest(val):
@@ -64,22 +93,8 @@ def sendOneM2Mrequest(val):
     # print(lastSentToOneM2M)
     # print(r)
 
-# all input data we have received so far
-# and our corresponding output on it
-data_so_far = [["1"], ["0"]]
-last_updated_data = ""
-seconds_to_keep_for = 10
-samples_per_sec = 600
-data_count_to_retain = samples_per_sec * seconds_to_keep_for
-graph_step = seconds_to_keep_for / data_count_to_retain
-BUZZ_ENABLED = True
-reg = re.compile(r"(\d{3})")
-rep = r"\1 "
-freg = r" "
-frep = r"0\n"
-SEP = " "
 
-def extras(response,output,shouldBuzzerBlow):
+def extras(response, output, shouldBuzzerBlow, isAnomaly):
     global data_so_far
     global last_updated_data
 
@@ -88,12 +103,13 @@ def extras(response,output,shouldBuzzerBlow):
 
     # hotfix, ignore
     fdata = data[:data.find("-1")]
-    fdata = re.sub(freg,frep,fdata.strip() + " ")
+    fdata = re.sub(" ", str(random.randint(0,9)) + r"\n", fdata.strip() + " ")
 
     # add latest data and trim to the count we wish to retain
     data_so_far[0] += data.split(" ")
     data_so_far[1] += list(output)
-    data_so_far = [data_so_far[0][-data_count_to_retain:], data_so_far[1][-data_count_to_retain:]]
+    data_so_far = [data_so_far[0][-data_count_to_retain:],
+                   data_so_far[1][-data_count_to_retain:]]
     last_updated_data = currentTimestampFormatted()
 
     append_to_file("out", fdata)
@@ -103,6 +119,10 @@ def extras(response,output,shouldBuzzerBlow):
         send_graph(data, output, "Found anomaly")
 
     sendOneM2Mrequest(shouldBuzzerBlow)
+
+    append_to_file(OUTPUT_LOG_FILE, isAnomaly)
+
+app = Flask(__name__, static_folder="static")
 
 @app.route("/", methods=["POST", "GET"])
 def evaluate_data():
@@ -131,19 +151,34 @@ def evaluate_data():
     output = output.decode("utf-8")
 
     shouldBuzzerBlow = "1" if BUZZ_ENABLED and output.find("1") != -1 else "0"
-    
-    threading.Thread(target=extras, args=(response,output,shouldBuzzerBlow)).start()
+    isAnomaly = "1" if output.find("1") != -1 else "0"
+
+    threading.Thread(target=extras, args=(
+        response, output, shouldBuzzerBlow, isAnomaly)).start()
 
     return shouldBuzzerBlow
+
+
+@app.route("/get-data/", methods=["GET"])
+def get_data():
+    global data_so_far
+
+    today = dt.date.today()
+
+    copyfile("output", f"../data/outputs/{today.year}-{today.month}-{today.day}.log")
+    return jsonify({"input": " ".join(data_so_far[0]), "output": " ".join(data_so_far[1])})
+
 
 @app.route("/home/", methods=["GET"])
 def render_home():
     global data_so_far
     auto_reload = True
+
     if request.args.get("auto_reload") == "False":
         auto_reload = False
-    # print(data_so_far[0][:50])
-    return render_template("home.html", input=" ".join(data_so_far[0]), output=" ".join(data_so_far[1]), auto_reload=auto_reload, step=graph_step, timestamp=last_updated_data)
+
+    return render_template("home.html", input=" ".join(data_so_far[0]), output=" ".join(data_so_far[1]), auto_reload=auto_reload, step=graph_step, timestamp=last_updated_data, duration=seconds_to_keep_for)
+
 
 @app.route("/enable/", methods=["GET", "POST"])
 def enableBuzz():
@@ -151,23 +186,80 @@ def enableBuzz():
     BUZZ_ENABLED = True
     return "1"
 
+
 @app.route("/disable/", methods=["GET", "POST"])
 def disableBuzz():
     global BUZZ_ENABLED
     BUZZ_ENABLED = False
     return "1"
 
+
 @app.route("/status/", methods=["GET", "POST"])
 def buzzStatus():
     return "1" if BUZZ_ENABLED else "0"
 
-@app.route("/BUZZ/", methods=["GET","POST"])
+
+@app.route("/BUZZ/", methods=["GET", "POST"])
 def override_buzzer():
     global BUZZ_NEXT
     BUZZ_NEXT = True
     return "Done!"
 
-@app.route("/test/", methods=["GET","POST"])
+# this thing returns number of anomalies this week, this day, and change in anomalies as percent from previous week
+@app.route("/top-order-json/", methods=["GET", "POST"])
+def top_order_json():
+    values = {}
+
+    today = dt.date.today()
+    prevWeekStart = today - dt.timedelta(days=6)
+    prevPrevWeekStart = prevWeekStart - dt.timedelta(days=7)
+
+    todaysCount = getDailyCount(today.year, today.month, today.day)
+    thisWeeksCount = getWeeklyCount(prevWeekStart.year, prevWeekStart.month, prevWeekStart.day)
+    prevWeeksCount = getWeeklyCount(prevPrevWeekStart.year, prevPrevWeekStart.month, prevPrevWeekStart.day)
+
+    values["anomaly-today"] = todaysCount
+    values["anomaly-week"] = thisWeeksCount
+    values["weekly-anomaly-change"] = ((thisWeeksCount - prevWeeksCount) / prevWeeksCount) * 100
+
+    return jsonify(values)
+
+@app.route("/bar-graph-day/", methods=["GET", "POST"])
+def bar_graph_day():
+    today = dt.date.today()
+    data = getQuarterCount(today.year, today.month, today.day)
+
+    return jsonify(data)
+
+@app.route("/bar-graph-weekly/", methods=["GET", "POST"])
+def bar_graph_weekly():
+    data = []
+
+    today = dt.date.today()
+    for i in range(7):
+        d = today - dt.timedelta(days=i)
+        data.append(getDailyCount(d.year, d.month, d.day))
+
+    return jsonify(data)
+
+@app.route("/get-day-log/<val>", methods=["GET", "POST"])
+def get_day_log(val):
+    year, month, day, hour = val.split("-")
+    name = f"{year}-{month}-{day}_{int(hour):02d}.log"
+    fileName = "../data/" + name
+
+    with open(fileName, "r") as micDataFile:
+        micData = micDataFile.read()
+
+    checkerOutput = getCheckerOutputFromLog(fileName)
+
+    with open(name, "w") as send:
+        send.write(micData)
+        send.write(checkerOutput)
+
+    return send_file(f'/home/esw_yoogottam/esw-project/server/{name}', as_attachment=True)
+
+@app.route("/test/", methods=["GET", "POST"])
 def testAliveURL():
     return "1"
 
