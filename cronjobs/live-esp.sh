@@ -1,6 +1,6 @@
 #!/bin/bash
 
-HOMEDIR="/home/esw_yoogottam/esw-project/"
+HOMEDIR="/home/esw_yoogottam/esw-project/server/"
 
 timestamp="$( date +%s )"
 last="$( cat ${HOMEDIR}live )"
