@@ -22,7 +22,7 @@ from analytics import getDailyCount, getWeeklyCount, getQuarterCount
 from log import getCheckerOutputFromLog
 
 
-ESP_DOWN_FILENAME = "../ESP_DOWN"
+ESP_DOWN_FILENAME = "ESP_DOWN"
 SERVER_DOWN_FILENAME = "../SERVER_DOWN"
 BUZZ_NEXT = False
 OUTPUT_LOG_FILE = "output"
@@ -228,6 +228,7 @@ def top_order_json():
 def bar_graph_day():
     today = dt.date.today()
     data = getQuarterCount(today.year, today.month, today.day)
+    print(data)
 
     return jsonify(data)
 

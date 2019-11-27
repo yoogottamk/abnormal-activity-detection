@@ -36,11 +36,29 @@ def getQuarterCount(year, month, date):
         text = f.read()
 
     quarters = np.array(list(text))
-    cnts = np.array_split(quarters, 4)
+
+    today = dt.date.today()
+    if today.year == year and today.month == month and today.day == date:
+        now = dt.datetime.now()
+        hr, mn = now.hour, now.minute
+
+        """
+        if hr < 6:
+            cnts = 
+        """
+        cnts = np.array_split(quarters, 4)
+    else:
+        cnts = np.array_split(quarters, 4)
 
     ret = []
 
     for cnt in cnts:
         ret.append(np.count_nonzero(cnt == "1"))
+
+    if today.year == year and today.month == month and today.day == date:
+        print(ret)
+        a = sorted(ret)
+        
+        return a[2:] + [ 0, 0 ]
 
     return ret
