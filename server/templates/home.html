@@ -259,7 +259,7 @@ query2("bar-graph-day", res => {
             labels: ["0000-0600", "0600-1200", "1200-1800", "1800-2400"],
             datasets: [{
                 label: "Number of anomalies in each quarter of the day",
-                data: res.reverse(),
+                data: res,
                 backgroundColor: color(window.chartColors.blue).alpha(0.5).rgbString(),
                 borderColor: window.chartColors.blue,
             }]
