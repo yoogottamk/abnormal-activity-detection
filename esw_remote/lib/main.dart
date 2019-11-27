@@ -1,111 +1,209 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
-void main() => runApp(MyApp());
+void main() => runApp(ESWRemote());
 
-class MyApp extends StatelessWidget {
-  // This widget is the root of your application.
+class ESWRemote extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
-        primarySwatch: Colors.blue,
-      ),
-      home: MyHomePage(title: 'Flutter Demo Home Page'),
-    );
+        title: 'ESWRemote',
+        theme: ThemeData(primarySwatch: Colors.blue),
+        home: HomePage(title: 'Management Console'));
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
+class HomePage extends StatefulWidget {
+  HomePage({Key key, this.title}) : super(key: key);
 
   final String title;
 
   @override
-  _MyHomePageState createState() => _MyHomePageState();
+  _HomePageState createState() => _HomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _HomePageState extends State<HomePage> {
+  bool _serverUp = false, _buzzerEnabled = false, _espUP = false;
+  int _buttonPress = 0;
+  final _serverIP = '10.2.8.12', _serverPort = '9999';
 
-  void _incrementCounter() {
+  /*
+     This enable/disable was handled differently
+     to handle concurrency issues.
+
+     A button like "Toggle current state" would have caused
+     confusion if multiple people were using this app at the
+     same time
+
+     resp == '1' => the request was processed by the server
+     So, the update rule for _disableBuzz looks a bit weird
+   */
+  void _enableBuzz() {
+    _request('/enable/').then((resp) => setState(() {
+          _buzzerEnabled = resp == '1';
+        }));
+  }
+
+  void _disableBuzz() {
+    _request('/disable/').then((resp) => setState(() {
+          _buzzerEnabled = (resp == '1') ? false : true;
+        }));
+  }
+
+  void _getStatus() {
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      _serverUp = false;
     });
+
+    _request('/test/').then((resp) => setState(() {
+          _serverUp = resp == '1';
+        }));
+
+    _request('/status/').then((resp) => setState(() {
+          _buzzerEnabled = resp == '1';
+        }));
+
+    _request('/esp-status').then((resp) => setState(() {
+          _espUP = resp == '1';
+        }));
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _getStatus();
+  }
+
+  Future<String> _request(String endpoint) async {
+    final response =
+        await http.get('http://' + _serverIP + ':' + _serverPort + endpoint);
+
+    if (response.statusCode == 200)
+      return response.body;
+    else
+      return '';
+  }
+
+  void _soundBuzzer() {
+    _request('/BUZZ/');
+  }
+
+  // All widgets
+
+  Widget _buzzStatus() {
+    return Container(
+      margin: EdgeInsets.only(bottom: 48.0),
+      width: MediaQuery.of(context).size.width / 2,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Container(
+              margin: EdgeInsets.only(top: 16.0),
+              child: Text('ESP: ' + (_espUP ? 'ACTIVE' : 'DOWN'),
+                  style: TextStyle(fontFamily: 'Inconsolata', fontSize: 24.0))),
+          Container(
+            padding: EdgeInsets.all(16.0),
+            child: _espUP
+                ? Icon(
+                    Icons.check_circle,
+                    color: Colors.green,
+                    size: 48.0,
+                  )
+                : Icon(Icons.error, color: Colors.red, size: 48.0),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buzzControlText() {
+    return Container(
+      padding: EdgeInsets.only(bottom: 24.0),
+      child: Text(
+        'BUZZER ' + (_buzzerEnabled ? 'ENABLED' : 'DISABLED'),
+        style: TextStyle(fontFamily: 'Inconsolata', fontSize: 24.0),
+      ),
+    );
+  }
+
+  Widget _buzzControlButton() {
+    return Container(
+      margin: EdgeInsets.only(bottom: 48.0),
+      child: RaisedButton(
+        child: Text(_buzzerEnabled ? 'DISABLE' : 'ENABLE'),
+        onPressed: _buzzerEnabled ? _disableBuzz : _enableBuzz,
+      ),
+    );
+  }
+
+  Widget _buzzControlIcon() {
+    return Container(
+        margin: EdgeInsets.only(bottom: 32.0),
+        child: SizedBox(
+          height: 96.0,
+          width: 96.0,
+          child: IconButton(
+            icon: Icon(_buzzerEnabled ? Icons.alarm_on : Icons.alarm_off,
+                size: 64.0),
+            onPressed: () {
+              setState(() {
+                _buttonPress++;
+              });
+            },
+          ),
+        ));
+  }
+
+  Widget _buzzScam() {
+    return Visibility(
+      visible: _buttonPress > 10,
+      child: RaisedButton(
+        child: Text('BUZZ'),
+        onPressed: _soundBuzzer,
+      ),
+    );
+  }
+
+  Widget _controls() {
+    if (!_serverUp) {
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Container(
+            margin: EdgeInsets.only(bottom: 32.0),
+            child: Icon(Icons.cloud_off, size: 48.0)
+          ),
+          Text('The server is\nnot reachable!',
+              style: TextStyle(fontFamily: 'Inconsolata', fontSize: 24.0)),
+        ],
+      );
+    } else {
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          _buzzStatus(),
+          _buzzControlText(),
+          _buzzControlButton(),
+          _buzzControlIcon(),
+          _buzzScam(),
+        ],
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
       ),
       body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.display1,
-            ),
-          ],
-        ),
+        child: _controls(),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+        child: Icon(Icons.refresh),
+        onPressed: _getStatus,
+      ),
     );
   }
 }
