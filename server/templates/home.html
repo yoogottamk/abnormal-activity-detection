@@ -71,7 +71,7 @@
                 <div class="col-md-12">
                     <div class="panel panel-default">
                         <div class="panel-heading">
-                            Live ambient sound data 
+                            Live ambient sound data
                         </div>
                         <div class="panel-body">
                             <div class="canvas-wrapper" style="width: 100%; height: 100%;">
@@ -131,10 +131,7 @@
 
             <script src="{{url_for('static', filename='js/jquery-1.11.1.min.js') }}"></script>
             <script src="{{url_for('static', filename='js/bootstrap.min.js') }}"></script>
-            <script src="{{url_for('static', filename='js/easypiechart.js') }}"></script>
-            <script src="{{url_for('static', filename='js/easypiechart-data.js') }}"></script>
             <script src="{{url_for('static', filename='js/bootstrap-datepicker.js') }}"></script>
-            <script src="{{url_for('static', filename='js/custom.js') }}"></script>
             <script src="{{url_for('static', filename='js/plot.js') }}"></script>
 
             <script>
@@ -147,7 +144,7 @@
 
 			if(params)
                     oReq.open("GET", "/" + endpoint + "/" + params);
-			else 
+			else
                     oReq.open("GET", "/" + endpoint + "/");
                     oReq.send();
                 }
@@ -165,7 +162,7 @@ query2("top-order-json", res => {
             let choose = isneg ? "down" : "up";
             value = Math.abs(value);
             document.getElementsByClassName("fa-arrow-circle-" + choose)[0].style.display = "inline-block";
-            let elmEnd = 
+            let elmEnd =
                 document.getElementsByClassName(endpoint)[0];
 		value = Math.round(value);
             elmEnd.innerHTML = value + "%";
@@ -329,7 +326,7 @@ window.addEventListener("load", function(){
 			swal("Aw, snap!", "We didn't deploy before this date", "error");
 		} else if(((new Date(inp.value+":"+hour+":00:00").getTime()/1000)|0) > Date.now()/1000){
 			swal("Woah!", "Don't rush to the future yet buddy, we ain't there yet!", "error");
-		}else{			
+		}else{
 			swal({
   title: "Great!",
   text: "Your data is on the way!",
@@ -337,10 +334,10 @@ window.addEventListener("load", function(){
   button: true,
 })
 .then((willDelete) => {
- window.location.href = "/get-day-log/" + val; 
+ window.location.href = "/get-day-log/" + val;
 });
 		}
-		
+
 
 	};
     processData(inString, outString, step, AUTO_RELOAD_ENABLED);
