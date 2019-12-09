@@ -39,6 +39,7 @@ server/live
 server/output
 server/graph.png
 server/*.log
+server/secretdata/**
 data/
 
 ESP_DOWN
