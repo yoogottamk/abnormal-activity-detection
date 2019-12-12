@@ -7,12 +7,12 @@ matplotlib.use("Agg")
 SEP = " "
 
 with open("secretdata/BOTUID") as f:
-    BOT_UID = f.read().trim()
+    BOT_UID = f.read().strip()
 
 BOT_URL = f'https://api.telegram.org/{BOT_UID}/'
 
 with open("secretdata/CHAT_IDS") as f:
-    CHAT_IDs = f.read().trim()
+    CHAT_IDs = f.read().strip()
     if CHAT_IDs:
         CHAT_IDs = CHAT_IDs.split(" ")
     else:
