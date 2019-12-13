@@ -1,0 +1,6 @@
+server/static/css/* linguist-vendored
+server/static/js/bootstrap* linguist-vendored
+server/static/js/jquery-1.11.1.min.js linguist-vendored
+server/static/js/lumino.glyphs.js linguist-vendored
+server/static/js/npm.js linguist-vendored
+server/static/fonts/* linguist-vendored
